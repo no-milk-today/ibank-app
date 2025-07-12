@@ -10,9 +10,13 @@ spring:
     driver-class-name: org.postgresql.Driver # optional
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop # Use 'create-drop' for development, 'update' for production
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: true
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
