@@ -1,21 +1,21 @@
 package com.practice.drm.customer;
 
+import com.practice.drm.clients.fraud.FraudClient;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 @Service
 @Slf4j
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
-    private final RestTemplate restTemplate;
+    private final FraudClient fraudClient;
 
-    public CustomerService(CustomerRepository customerRepository, RestTemplate restTemplate) {
+    public CustomerService(CustomerRepository customerRepository, FraudClient fraudClient) {
         this.customerRepository = customerRepository;
-        this.restTemplate = restTemplate;
+        this.fraudClient = fraudClient;
     }
 
     @CircuitBreaker(name = "fraudCheckService", fallbackMethod = "fraudCheckFallback")
@@ -32,11 +32,9 @@ public class CustomerService {
         // If we don’t say ‘save and FLUSH’ then the ID will be null.
         customerRepository.saveAndFlush(customer);
 
-        var fraudCheckResponse = restTemplate.getForObject(
-                "http://FRAUD/api/v1/fraud-check/{customerId}",
-                FraudCheckResponse.class,
-                customer.getId()
-        );
+        var fraudCheckResponse =
+                fraudClient.isFraudster(customer.getId());
+
         customerRepository.save(customer);
         if (fraudCheckResponse.isFraudster()) {
             throw new IllegalStateException("fraudster");
