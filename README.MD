@@ -16,9 +16,12 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - **Clients**  
   Contains shared Feign clients and response object definitions used for inter-service communication.
 
+- **Notification**  
+  Handles sending notifications to customers. It uses a PostgreSQL database for persistence and registers with Eureka. The service receives notification requests from other microservices via Feign clients and processes them asynchronously.
+
 ## Technologies
 - Spring Boot
-- Spring Cloud (Eureka, OpenFeign)
+- Spring Cloud (Eureka, OpenFeign, Load Balancer)
 - Netflix OSS
 - Resilience4j (Circuit breaker and Retry)
 - Maven
@@ -38,11 +41,16 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - **GET** `/api/v1/fraud-check/{customerId}`  
   Checks if the customer with the provided \`customerId\` is fraudulent. Stores the fraud check history.
 
+### Notification Microservice
+
+- **POST** `/api/v1/notifications`  
+  Sends a notification to a customer.
+- The service is configured to run on port \`8083\` and uses PostgreSQL for data storage.
+
 ### Clients Module
 
-- Provides a Feign client to communicate with the Fraud service.
-- The client is defined to resolve the service name (e.g. using \`http://fraud\`), and load balances using Spring Cloud LoadBalancer.
-- It also includes response objects needed for the service communication.
+- Provides Feign clients for inter-service communication such as contacting the Fraud and Notification services.
+- The Feign clients are defined to resolve service names (e.g. \`http://fraud\`, \`http://notification\`) and load balance using Spring Cloud LoadBalancer.
 
 ## Running the Project
 
@@ -57,3 +65,4 @@ This project is composed of multiple microservices using the Netflix stack (Eure
     ```
 5. // todo: Access the application at `http://localhost:8080`. Not implemented yet.
 
+6. Access the Eureka dashboard at `http://localhost:8761` to see all registered services.
