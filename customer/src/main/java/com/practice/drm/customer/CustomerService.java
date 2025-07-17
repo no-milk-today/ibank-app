@@ -3,11 +3,18 @@ package com.practice.drm.customer;
 import com.practice.drm.clients.fraud.FraudClient;
 import com.practice.drm.clients.notification.NotificationClient;
 import com.practice.drm.clients.notification.NotificationRequest;
+import com.practice.drm.customer.dto.*;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -15,17 +22,26 @@ import org.springframework.stereotype.Service;
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final AccountRepository accountRepository;
     private final FraudClient fraudClient;
     private final NotificationClient notificationClient;
 
 
     @CircuitBreaker(name = "fraudCheckService", fallbackMethod = "fraudCheckFallback")
     @Retry(name = "fraudCheckService")
-    public void registerCustomer(CustomerRegistrationRequest request) {
+    public CustomerRegistrationResponse registerCustomer(CustomerRegistrationRequest request) {
+        List<String> validationErrors = validateRegistrationRequest(request);
+
+        if (!validationErrors.isEmpty()) {
+            return new CustomerRegistrationResponse(false, validationErrors);
+        }
+
         var customer = Customer.builder()
-                .firstName(request.firstName())
-                .lastName(request.lastName())
+                .login(request.login())
+                .passwordHash(BCrypt.hashpw(request.password(), BCrypt.gensalt()))
+                .name(request.name())
                 .email(request.email())
+                .birthdate(request.birthdate())
                 .build();
         // todo: check if email valid
         // todo: check if not taken
@@ -35,10 +51,11 @@ public class CustomerService {
 
         var fraudCheckResponse =
                 fraudClient.isFraudster(customer.getId());
-
-        customerRepository.save(customer);
         if (fraudCheckResponse.isFraudster()) {
-            throw new IllegalStateException("fraudster");
+            customerRepository.delete(customer);
+            List<String> fraudErrors = new ArrayList<>();
+            fraudErrors.add("Your registration is blocked due to fraud suspicion");
+            return new CustomerRegistrationResponse(false, fraudErrors);
         }
         // todo: make it async. i.e. add to queue
         notificationClient.sendNotification(
@@ -46,14 +63,199 @@ public class CustomerService {
                         customer.getId(),
                         customer.getEmail(),
                         String.format("Hi %s, welcome to Bank-system...",
-                                customer.getFirstName())
+                                customer.getName())
                 )
         );
+        return new CustomerRegistrationResponse(true, Collections.emptyList());
+    }
+
+    private List<String> validateRegistrationRequest(CustomerRegistrationRequest request) {
+        List<String> errors = new ArrayList<>();
+
+        if (request.login() == null || request.login().trim().isEmpty()) {
+            errors.add("Login cannot be empty");
+        }
+
+        if (request.password() == null || request.confirmPassword() == null ||
+                !request.password().equals(request.confirmPassword())) {
+            errors.add("Passwords do not match");
+        }
+
+        if (request.password() == null || request.password().trim().isEmpty()) {
+            errors.add("Password cannot be empty");
+        }
+
+        if (request.name() == null || request.name().trim().isEmpty()) {
+            errors.add("First and Last name are required");
+        }
+
+        if (request.email() == null || request.email().isEmpty() || !validateEmail(request.email())) {
+            errors.add("Invalid e-mail");
+        }
+
+        if (request.birthdate() == null || !over18(request.birthdate())) {
+            errors.add("You must be at least 18 years old");
+        }
+
+        if (customerRepository.existsByLogin(request.login())) {
+            errors.add("A user with this login already exists");
+        }
+
+        if (customerRepository.existsByEmail(request.email())) {
+            errors.add("A user with this email already exists");
+        }
+
+        return errors;
     }
 
     public void fraudCheckFallback(CustomerRegistrationRequest request, Throwable ex) {
         log.error("Fraud check service is unavailable. Fallback method invoked for request: {}", request, ex);
         // Логика fallback: например, логирование, сохранение статуса, отправка уведомления
         throw new IllegalStateException("Fraud service unavailable. Please try later.", ex);
+    }
+
+    private boolean validateEmail(String email) {
+        // Простая regex-проверка
+        return email != null && email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    }
+
+    private boolean over18(LocalDate birth) {
+        return birth != null && birth.isBefore(LocalDate.now().minusYears(18));
+    }
+
+    // Агрегирующий метод для main
+    public MainPageData getMainData(String login) {
+        var customer = customerRepository.findByLogin(login)
+                .orElseThrow(() -> new NoSuchElementException("Customer not found " + login));
+
+        var accountsDto = Arrays.stream(Currency.values())
+                .map(currency -> {
+                    Optional<Account> account = customer.getAccounts() == null
+                            ? Optional.empty()
+                            : customer.getAccounts().stream()
+                                .filter(acc -> acc.getCurrency() == currency)
+                                .findFirst();
+                    return new AccountDto(
+                            currency,
+                            currency.name(),
+                            currency.getTitle(),
+                            account.map(Account::getBalance).orElse(BigDecimal.ZERO),
+                            account.isPresent()
+                    );
+                }).collect(Collectors.toList());
+
+        // Prepare users list for transfers etc.
+        var users = customerRepository.findAll().stream()
+                .map(user -> new UserShortDto(user.getLogin(), user.getName()))
+                .collect(Collectors.toList());
+
+        var currencies = Arrays.stream(Currency.values())
+                .map(currency -> new CurrencyDto(currency.name(), currency.getTitle()))
+                .collect(Collectors.toList());
+
+        return new MainPageData(
+                customer.getLogin(),
+                customer.getName(),
+                customer.getEmail(),
+                customer.getBirthdate(),
+                accountsDto,
+                currencies,
+                users,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    // CRUD для профиля и счетов (методы edit)
+    public List<String> editUserProfile(String login, EditUserAccountsRequest request) {
+        List<String> errors = new ArrayList<>();
+        var customer = customerRepository.findByLogin(login)
+                .orElseThrow(() -> new NoSuchElementException("Customer not found"));
+
+        if (request.name() == null || request.name().trim().isEmpty()) {
+            errors.add("First and Last name are required");
+        }
+        if (request.email() == null || request.email().isEmpty() || !validateEmail(request.email())) {
+            errors.add("Invalid email format");
+        } else if (!customer.getEmail().equals(request.email())
+                && customerRepository.existsByEmail(request.email())) {
+            errors.add("Email already exists");
+        }
+        if (request.birthdate() == null || !over18(request.birthdate())) {
+            errors.add("You must be at least 18 years old");
+        }
+        if (!errors.isEmpty()) return errors;
+
+        customer.setName(request.name());
+        customer.setEmail(request.email());
+        customer.setBirthdate(request.birthdate());
+
+        // --- Accounts ---
+        Set<Currency> desiredCurrencies = request.accounts() == null
+                ? Collections.emptySet()
+                : request.accounts().stream().map(Currency::valueOf).collect(Collectors.toSet());
+
+        // Duplicate check
+        if (desiredCurrencies.size() != (request.accounts() == null ? 0 : request.accounts().size())) {
+            errors.add("Duplicate currencies in the accounts list");
+            return errors;
+        }
+
+        // Get rid of unwanted accounts (only if balance = 0)
+        var accountsToRemove = customer.getAccounts().stream()
+                .filter(account -> !desiredCurrencies.contains(account.getCurrency()))
+                .toList();
+
+        for (var account : accountsToRemove) {
+            if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+                errors.add("Cannot delete account " + account.getCurrency() + " with non-zero balance");
+            }
+        }
+
+        if (!errors.isEmpty()) return errors;
+
+        customer.getAccounts().removeAll(accountsToRemove);
+
+        // Добавляем недостающие счета (balance = 0)
+        Set<Currency> existingCurrencies = customer.getAccounts().stream()
+                .map(Account::getCurrency).collect(Collectors.toSet());
+
+        for (Currency currency : desiredCurrencies) {
+            if (!existingCurrencies.contains(currency)) {
+                customer.getAccounts().add(Account.builder()
+                        .currency(currency)
+                        .balance(BigDecimal.ZERO)
+                        .customer(customer)
+                        .build());
+            }
+        }
+
+        customerRepository.save(customer);
+        return Collections.emptyList();
+    }
+
+    public List<String> editPassword(String login, EditPasswordRequest request) {
+        List<String> errors = new ArrayList<>();
+
+        if (request.password() == null || request.password().isEmpty()) {
+            errors.add("Пароль не может быть пустым");
+        }
+
+        if (!Objects.equals(request.password(), request.confirmPassword())) {
+            errors.add("Пароли не совпадают");
+        }
+
+        if (!errors.isEmpty()) return errors;
+
+        Customer customer = customerRepository.findByLogin(login)
+                .orElseThrow(() -> new NoSuchElementException("Customer not found"));
+
+        customer.setPasswordHash(BCrypt.hashpw(request.password(), BCrypt.gensalt()));
+        customerRepository.save(customer);
+
+        return Collections.emptyList();
     }
 }
