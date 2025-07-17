@@ -19,6 +19,9 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - **Notification**  
   Handles sending notifications to customers. It uses a PostgreSQL database for persistence and registers with Eureka. The service receives notification requests from other microservices via Feign clients and processes them asynchronously.
 
+- **API Gateway**  
+  Routes incoming requests to the appropriate microservices. It is built using Spring Cloud Gateway and provides load balancing, routing, and fallback capabilities. The gateway integrates with Eureka for service discovery and uses filters to handle cross-cutting concerns like error handling and circuit breaking.
+
 ## Technologies
 - Spring Boot
 - Spring Cloud (Eureka, OpenFeign, Load Balancer)
@@ -27,6 +30,13 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - Maven
 
 ## Service Endpoints
+
+### API Gateway
+
+- All requests pass through the API Gateway.
+- **Example:**  
+  - **GET** `/api/v1/customers/public`  
+    Routes the request to the Customer service.
 
 ### Customer Microservice
 
@@ -63,6 +73,6 @@ This project is composed of multiple microservices using the Netflix stack (Eure
    ```bash
    mvn spring-boot:run
     ```
-5. // todo: Access the application at `http://localhost:8080`. Not implemented yet.
+5. // todo: Access the application at `http://localhost:8084`. Not implemented yet.
 
 6. Access the Eureka dashboard at `http://localhost:8761` to see all registered services.
