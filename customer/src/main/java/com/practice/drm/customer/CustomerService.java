@@ -1,5 +1,10 @@
 package com.practice.drm.customer;
 
+import com.practice.drm.clients.customer.AccountDto;
+import com.practice.drm.clients.customer.Currency;
+import com.practice.drm.clients.customer.CurrencyDto;
+import com.practice.drm.clients.customer.MainPageData;
+import com.practice.drm.clients.customer.UserShortDto;
 import com.practice.drm.clients.fraud.FraudClient;
 import com.practice.drm.clients.notification.NotificationClient;
 import com.practice.drm.clients.notification.NotificationRequest;
@@ -128,7 +133,7 @@ public class CustomerService {
         var customer = customerRepository.findByLogin(login)
                 .orElseThrow(() -> new NoSuchElementException("Customer not found " + login));
 
-        var accountsDto = Arrays.stream(Currency.values())
+        var accountsDto = Arrays.stream(com.practice.drm.clients.customer.Currency.values())
                 .map(currency -> {
                     Optional<Account> account = customer.getAccounts() == null
                             ? Optional.empty()
@@ -149,7 +154,7 @@ public class CustomerService {
                 .map(user -> new UserShortDto(user.getLogin(), user.getName()))
                 .collect(Collectors.toList());
 
-        var currencies = Arrays.stream(Currency.values())
+        var currencies = Arrays.stream(com.practice.drm.clients.customer.Currency.values())
                 .map(currency -> new CurrencyDto(currency.name(), currency.getTitle()))
                 .collect(Collectors.toList());
 
@@ -194,9 +199,9 @@ public class CustomerService {
         customer.setBirthdate(request.birthdate());
 
         // --- Accounts ---
-        Set<Currency> desiredCurrencies = request.accounts() == null
+        Set<com.practice.drm.clients.customer.Currency> desiredCurrencies = request.accounts() == null
                 ? Collections.emptySet()
-                : request.accounts().stream().map(Currency::valueOf).collect(Collectors.toSet());
+                : request.accounts().stream().map(com.practice.drm.clients.customer.Currency::valueOf).collect(Collectors.toSet());
 
         // Duplicate check
         if (desiredCurrencies.size() != (request.accounts() == null ? 0 : request.accounts().size())) {
@@ -220,7 +225,7 @@ public class CustomerService {
         customer.getAccounts().removeAll(accountsToRemove);
 
         // Добавляем недостающие счета (balance = 0)
-        Set<Currency> existingCurrencies = customer.getAccounts().stream()
+        Set<com.practice.drm.clients.customer.Currency> existingCurrencies = customer.getAccounts().stream()
                 .map(Account::getCurrency).collect(Collectors.toSet());
 
         for (Currency currency : desiredCurrencies) {

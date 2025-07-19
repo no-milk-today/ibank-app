@@ -1,5 +1,7 @@
 package com.practice.drm.customer.dto;
 
+import com.practice.drm.clients.customer.AccountDto;
+
 import java.time.LocalDate;
 import java.util.List;
 

@@ -1,5 +1,6 @@
 package com.practice.drm.customer;
 
+import com.practice.drm.clients.customer.Currency;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

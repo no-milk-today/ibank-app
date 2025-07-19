@@ -1,6 +1,5 @@
-package com.practice.drm.customer.dto;
+package com.practice.drm.clients.customer;
 
-import com.practice.drm.customer.Currency;
 import java.math.BigDecimal;
 
 public record AccountDto(

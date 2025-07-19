@@ -1,6 +1,10 @@
 package com.practice.drm.customer;
 
-import com.practice.drm.customer.dto.*;
+import com.practice.drm.clients.customer.MainPageData;
+import com.practice.drm.customer.dto.CustomerRegistrationRequest;
+import com.practice.drm.customer.dto.CustomerRegistrationResponse;
+import com.practice.drm.customer.dto.EditPasswordRequest;
+import com.practice.drm.customer.dto.EditUserAccountsRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;

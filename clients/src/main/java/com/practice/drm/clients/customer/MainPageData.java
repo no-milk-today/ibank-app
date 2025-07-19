@@ -1,4 +1,4 @@
-package com.practice.drm.customer.dto;
+package com.practice.drm.clients.customer;
 
 import java.time.LocalDate;
 import java.util.List;

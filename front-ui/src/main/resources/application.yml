@@ -1,0 +1,28 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: front-ui
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    preferIpAddress: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      customer-client:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+  retry:
+    instances:
+      customer-client:
+        maxAttempts: 3
+        waitDuration: 500ms

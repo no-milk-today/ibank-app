@@ -1,5 +1,6 @@
 package com.practice.drm.customer;
 
+import com.practice.drm.clients.customer.Currency;
 import jakarta.persistence.*;
 import lombok.*;
 

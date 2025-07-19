@@ -1,4 +1,4 @@
-package com.practice.drm.customer;
+package com.practice.drm.clients.customer;
 
 public enum Currency {
     RUB("RUB", "Рубль"),
