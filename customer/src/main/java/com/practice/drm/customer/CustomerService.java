@@ -1,10 +1,7 @@
 package com.practice.drm.customer;
 
-import com.practice.drm.clients.customer.AccountDto;
+import com.practice.drm.clients.customer.*;
 import com.practice.drm.clients.customer.Currency;
-import com.practice.drm.clients.customer.CurrencyDto;
-import com.practice.drm.clients.customer.MainPageData;
-import com.practice.drm.clients.customer.UserShortDto;
 import com.practice.drm.clients.fraud.FraudClient;
 import com.practice.drm.clients.notification.NotificationClient;
 import com.practice.drm.clients.notification.NotificationRequest;

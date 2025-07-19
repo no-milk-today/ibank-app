@@ -1,6 +1,7 @@
 package com.practice.drm.frontui;
 
 import com.practice.drm.clients.customer.CustomerClient;
+import com.practice.drm.clients.customer.EditPasswordRequest;
 import com.practice.drm.clients.customer.MainPageData;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -40,5 +41,9 @@ public class FrontUiService {
             null,
             null
         );
+    }
+
+    public List<String> changePassword(String login, String password, String confirmPassword) {
+        return customerClient.editPassword(login, new EditPasswordRequest(password, confirmPassword));
     }
 }

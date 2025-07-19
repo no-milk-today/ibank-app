@@ -5,7 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @Slf4j
@@ -47,6 +52,35 @@ public class MainController {
             model.addAttribute("login", login);
             return "main";
         }
+    }
+
+    @PostMapping("/user/{login}/editPassword")
+    public String editPassword(
+            @PathVariable("login") String login,
+            @RequestParam("password") String password,
+            @RequestParam("confirm_password") String confirmPassword,  // здесь имя из формы
+            Model model
+    ) {
+        List<String> errors = frontUiService.changePassword(login, password, confirmPassword);
+        return redirectToMainWithErrors(login, model, "passwordErrors", errors);
+    }
+
+    private String redirectToMainWithErrors(
+            String login, Model model, String field, List<String> errors
+    ) {
+        // Получаем свежие данные для main
+        var mainData = frontUiService.getMainPageData(login);
+        model.addAllAttributes(Map.of(
+                "login", mainData.login(),
+                "name", mainData.name(),
+                "email", mainData.email(),
+                "birthdate", mainData.birthdate(),
+                "accounts", mainData.accounts(),
+                "currency", mainData.currency(),
+                "users", mainData.users(),
+                field, errors
+        ));
+        return "main";
     }
 
     @GetMapping("/signup")
