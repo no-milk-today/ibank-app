@@ -22,7 +22,11 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - **API Gateway**  
   Routes incoming requests to the appropriate microservices. It is built using Spring Cloud Gateway and provides load balancing, routing, and fallback capabilities. The gateway integrates with Eureka for service discovery and uses filters to handle cross-cutting concerns like error handling and circuit breaking.
 
+- **FRONT UI**  
+  Provides a web user interface using Thymeleaf. The service runs on port `8085` and integrates with other microservices via Feign clients. It exposes endpoints such as `/` for the landing page (redirecting to `/main`) and `/main?login={login}` to render the main page with dynamic user data.
+  
 ## Technologies
+
 - Spring Boot
 - Spring Cloud (Eureka, OpenFeign, Load Balancer)
 - Netflix OSS
@@ -62,6 +66,13 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - Provides Feign clients for inter-service communication such as contacting the Fraud and Notification services.
 - The Feign clients are defined to resolve service names (e.g. \`http://fraud\`, \`http://notification\`) and load balance using Spring Cloud LoadBalancer.
 
+### FRONT UI Microservice
+
+- **GET** `/`  
+  Redirects to the main page.
+- **GET** `/main?login={login}`  
+  Renders the main page using Thymeleaf and loads dynamic user data.
+  
 ## Running the Project
 
 1. Ensure you have Java and Maven installed.
