@@ -5,7 +5,6 @@ import com.practice.drm.clients.customer.Currency;
 import com.practice.drm.clients.fraud.FraudClient;
 import com.practice.drm.clients.notification.NotificationClient;
 import com.practice.drm.clients.notification.NotificationRequest;
-import com.practice.drm.customer.dto.*;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.AllArgsConstructor;

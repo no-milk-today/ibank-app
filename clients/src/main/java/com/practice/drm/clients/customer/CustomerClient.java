@@ -16,4 +16,9 @@ public interface CustomerClient {
             @PathVariable("login") String login,
             @RequestBody EditPasswordRequest request
     );
+
+    @PostMapping("/api/v1/customers/signup")
+    CustomerRegistrationResponse registerCustomer(
+            @RequestBody CustomerRegistrationRequest request
+    );
 }

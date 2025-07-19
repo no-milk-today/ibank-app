@@ -1,14 +1,13 @@
 package com.practice.drm.frontui;
 
-import com.practice.drm.clients.customer.CustomerClient;
-import com.practice.drm.clients.customer.EditPasswordRequest;
-import com.practice.drm.clients.customer.MainPageData;
+import com.practice.drm.clients.customer.*;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -45,5 +44,33 @@ public class FrontUiService {
 
     public List<String> changePassword(String login, String password, String confirmPassword) {
         return customerClient.editPassword(login, new EditPasswordRequest(password, confirmPassword));
+    }
+
+    @CircuitBreaker(name = "customer-client", fallbackMethod = "registerCustomerFallback")
+    @Retry(name = "customer-client")
+    public CustomerRegistrationResponse registerCustomer(
+            String login,
+            String password,
+            String confirmPassword,
+            String name,
+            String email,
+            LocalDate birthdate
+    ) {
+        log.info("Registering new customer: {}", login);
+        var request = new CustomerRegistrationRequest(
+                login, password, confirmPassword, name, email, birthdate
+        );
+        return customerClient.registerCustomer(request);
+    }
+
+    public CustomerRegistrationResponse registerCustomerFallback(
+            String login, String password, String confirmPassword,
+            String name, String email, LocalDate birthdate, Exception ex
+    ) {
+        log.error("Customer registration service unavailable for user: {}. Error: {}", login, ex.getMessage());
+        return new CustomerRegistrationResponse(
+                false,
+                List.of("Сервис регистрации временно недоступен. Попробуйте позже.")
+        );
     }
 }

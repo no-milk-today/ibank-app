@@ -2,6 +2,7 @@ package com.practice.drm.frontui;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -86,5 +88,45 @@ public class MainController {
     @GetMapping("/signup")
     public String signup() {
         return "signup";
+    }
+
+    @PostMapping("/signup")
+    public String signup(
+            @RequestParam("login") String login,
+            @RequestParam("password") String password,
+            @RequestParam("confirm_password") String confirmPassword,
+            @RequestParam("name") String name,
+            @RequestParam("email") String email,
+            @RequestParam("birthdate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate birthdate,
+            Model model
+    ) {
+        log.info("Registration request for user: {}", login);
+
+        try {
+            var response = frontUiService.registerCustomer(
+                    login, password, confirmPassword, name, email, birthdate
+            );
+
+            if (response.success()) {
+                // Успешная регистрация - редирект на главную страницу
+                return "redirect:/main?login=" + login;
+            } else {
+                // Есть ошибки - возвращаем на форму с ошибками
+                model.addAttribute("errors", response.errors());
+                model.addAttribute("login", login);
+                model.addAttribute("name", name);
+                model.addAttribute("email", email);
+                model.addAttribute("birthdate", birthdate);
+                return "signup";
+            }
+        } catch (Exception e) {
+            log.error("Registration error for user: {}", login, e);
+            model.addAttribute("errors", List.of("Ошибка при регистрации: " + e.getMessage()));
+            model.addAttribute("login", login);
+            model.addAttribute("name", name);
+            model.addAttribute("email", email);
+            model.addAttribute("birthdate", birthdate);
+            return "signup";
+        }
     }
 }
