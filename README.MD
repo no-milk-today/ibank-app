@@ -84,6 +84,6 @@ This project is composed of multiple microservices using the Netflix stack (Eure
    ```bash
    mvn spring-boot:run
     ```
-5. Access the application (api-gateway) at `http://localhost:8084`.
+5. Access the application (api-gateway) at `http://localhost:8080`.
 
 6. Access the Eureka dashboard at `http://localhost:8761` to see all registered services.
