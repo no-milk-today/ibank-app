@@ -37,18 +37,27 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 
 ### API Gateway
 
-- All requests pass through the API Gateway.
+- All requests pass through the API Gateway on port `8080`.
 - **Example:**  
   - **GET** `/api/v1/customers/public`  
     Routes the request to the Customer service.
 
 ### Customer Microservice
 
-- **POST** `/api/v1/customers`  
-  Registers a new customer using a JSON body with fields: \`firstName\`, \`lastName\`, and \`email\`.
+- **POST** `/api/v1/customers/signup`  
+  Registers a new customer using a JSON body with fields: `login`, `password`, `confirmPassword`, `name`, `email`, and `birthdate`.
 
 - **GET** `/api/v1/customers/public`  
   Public endpoint to verify service availability.
+
+- **GET** `/api/v1/customers/main?login={login}`  
+  Retrieves main page data for a specific user including account information, available currencies, and user lists.
+
+- **POST** `/api/v1/customers/user/{login}/editPassword`  
+  Changes user password. Accepts JSON body with `password` and `confirmPassword` fields.
+
+- **POST** `/api/v1/customers/user/{login}/editUserAccounts`  
+  Updates user profile and account settings. Accepts JSON body with `name`, `email`, `birthdate`, and `accounts` fields.
 
 ### Fraud Microservice
 
@@ -70,8 +79,15 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 
 - **GET** `/`  
   Redirects to the main page.
+  
 - **GET** `/main?login={login}`  
-  Renders the main page using Thymeleaf and loads dynamic user data.
+  Renders the main page using Thymeleaf and loads dynamic user data for the specified user.
+
+- **POST** `/user/{login}/editPassword`  
+  Processes password change form submission. Accepts form data with `password` and `confirm_password` fields.
+
+- **GET** `/signup`  
+  Displays the user registration form.
   
 ## Running the Project
 
@@ -84,6 +100,34 @@ This project is composed of multiple microservices using the Netflix stack (Eure
    ```bash
    mvn spring-boot:run
     ```
-5. Access the application (api-gateway) at `http://localhost:8080`.
+4. Access the application (api-gateway) at `http://localhost:8080`.
 
-6. Access the Eureka dashboard at `http://localhost:8761` to see all registered services.
+5. Access the Eureka dashboard at `http://localhost:8761` to see all registered services.
+
+## Usage Examples
+
+### Register a new customer
+```bash
+POST http://localhost:8080/api/v1/customers/signup
+Content-Type: application/json
+
+{
+  "login": "john",
+  "password": "securePassword123",
+  "confirmPassword": "securePassword123", 
+  "name": "John Doe",
+  "email": "jdoe2@gmail.com",
+  "birthdate": "1995-03-15"
+}
+```
+
+### Change user password
+```bash
+POST http://localhost:8080/api/v1/customers/user/john/editPassword
+Content-Type: application/json
+
+{
+  "password": "newPassword123",
+  "confirmPassword": "newPassword123"
+}
+```
