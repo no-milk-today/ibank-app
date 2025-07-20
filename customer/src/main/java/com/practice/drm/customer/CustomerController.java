@@ -36,7 +36,7 @@ public class CustomerController {
 
     @PostMapping("/user/{login}/editUserAccounts")
     public List<String> editUserAccounts(
-            @PathVariable String login,
+            @PathVariable("login") String login,
             @RequestBody EditUserAccountsRequest req
     ) {
         return customerService.editUserProfile(login, req);
