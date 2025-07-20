@@ -83,11 +83,15 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - **GET** `/main?login={login}`  
   Renders the main page using Thymeleaf and loads dynamic user data for the specified user.
 
+- **GET** `/signup`
+- Displays the customer registration form.
+
+- **POST** `/signup`  
+  Registers a new customer. Accepts form data with `login`, `password`, `confirm_password`, `name`, `email`, and `birthdate` fields.
+
 - **POST** `/user/{login}/editPassword`  
   Processes password change form submission. Accepts form data with `password` and `confirm_password` fields.
 
-- **GET** `/signup`  
-  Displays the user registration form.
   
 ## Running the Project
 
