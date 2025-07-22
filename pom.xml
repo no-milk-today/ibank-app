@@ -19,6 +19,7 @@
     <module>notification</module>
     <module>apigw</module>
     <module>front-ui</module>
+    <module>exchange</module>
   </modules>
 
   <properties>
