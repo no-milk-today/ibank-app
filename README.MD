@@ -57,7 +57,7 @@ This project is composed of multiple microservices using the Netflix stack (Eure
   Changes user password. Accepts JSON body with `password` and `confirmPassword` fields.
 
 - **POST** `/api/v1/customers/user/{login}/editUserAccounts`  
-  Updates user profile and account settings. Accepts JSON body with `name`, `email`, `birthdate`, and `accounts` fields.
+  Updates user profile and account settings. Accepts JSON body with `name`, `birthdate`, and `accounts` fields.
 
 ### Fraud Microservice
 
@@ -91,6 +91,9 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 
 - **POST** `/user/{login}/editPassword`  
   Processes password change form submission. Accepts form data with `password` and `confirm_password` fields.
+
+- **POST** `/user/{login}/editUserAccounts`  
+  Processes user account update form submission. Accepts form data with `name`, `birthdate`, and `accounts` fields.
 
   
 ## Running the Project
@@ -133,5 +136,20 @@ Content-Type: application/json
 {
   "password": "newPassword123",
   "confirmPassword": "newPassword123"
+}
+```
+
+### Change user profile and accounts
+```bash
+POST http://localhost:8080/api/v1/customers/user/john/editUserAccounts
+Content-Type: application/json
+
+{
+  "name" : "John Doe",
+  "birthdate": "1995-03-15",
+  "accounts": [
+    "RUB",
+    "USD"
+  ]
 }
 ```
