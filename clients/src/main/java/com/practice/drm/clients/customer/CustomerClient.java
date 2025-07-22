@@ -21,4 +21,10 @@ public interface CustomerClient {
     CustomerRegistrationResponse registerCustomer(
             @RequestBody CustomerRegistrationRequest request
     );
+
+    @PostMapping("/api/v1/customers/user/{login}/editUserAccounts")
+    List<String> editUserAccounts(
+            @PathVariable("login") String login,
+            @RequestBody EditUserAccountsRequest request
+    );
 }

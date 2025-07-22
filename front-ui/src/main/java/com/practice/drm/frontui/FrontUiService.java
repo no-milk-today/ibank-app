@@ -73,4 +73,25 @@ public class FrontUiService {
                 List.of("Сервис регистрации временно недоступен. Попробуйте позже.")
         );
     }
+
+    @CircuitBreaker(name = "customer-client", fallbackMethod = "editUserAccountsFallback")
+    @Retry(name = "customer-client")
+    public List<String> editUserAccounts(
+            String login,
+            String name,
+            LocalDate birthdate,
+            List<String> accounts
+    ) {
+        log.info("Editing accounts for customer: {}", login);
+        var request = new EditUserAccountsRequest(name, birthdate, accounts);
+        return customerClient.editUserAccounts(login, request);
+    }
+
+    public List<String> editUserAccountsFallback(
+            String login, String name,
+            LocalDate birthdate, List<String> accounts, Exception ex
+    ) {
+        log.error("Customer edit accounts service unavailable for user: {}. Error: {}", login, ex.getMessage());
+        return List.of("Сервис редактирования профиля временно недоступен. Попробуйте позже.");
+    }
 }

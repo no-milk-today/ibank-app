@@ -179,19 +179,12 @@ public class CustomerService {
         if (request.name() == null || request.name().trim().isEmpty()) {
             errors.add("First and Last name are required");
         }
-        if (request.email() == null || request.email().isEmpty() || !validateEmail(request.email())) {
-            errors.add("Invalid email format");
-        } else if (!customer.getEmail().equals(request.email())
-                && customerRepository.existsByEmail(request.email())) {
-            errors.add("Email already exists");
-        }
         if (request.birthdate() == null || !over18(request.birthdate())) {
             errors.add("You must be at least 18 years old");
         }
         if (!errors.isEmpty()) return errors;
 
         customer.setName(request.name());
-        customer.setEmail(request.email());
         customer.setBirthdate(request.birthdate());
 
         // --- Accounts ---

@@ -5,7 +5,6 @@ import java.util.List;
 
 public record EditUserAccountsRequest(
         String name,
-        String email,
         LocalDate birthdate,
         List<String> accounts
 ) {}

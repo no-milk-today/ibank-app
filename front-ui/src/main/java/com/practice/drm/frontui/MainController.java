@@ -129,4 +129,23 @@ public class MainController {
             return "signup";
         }
     }
+
+    @PostMapping("/user/{login}/editUserAccounts")
+    public String editUserAccounts(
+            @PathVariable("login") String login,
+            @RequestParam("name") String name,
+            @RequestParam("birthdate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate birthdate,
+            @RequestParam(value = "account", required = false) List<String> accounts,
+            Model model
+    ) {
+        log.info("Edit user accounts request for user: {}", login);
+
+        // Если accounts null, передаем пустой список
+        if (accounts == null) {
+            accounts = List.of();
+        }
+
+        List<String> errors = frontUiService.editUserAccounts(login, name, birthdate, accounts);
+        return redirectToMainWithErrors(login, model, "userAccountsErrors", errors);
+    }
 }
