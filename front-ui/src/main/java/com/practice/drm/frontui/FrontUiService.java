@@ -1,6 +1,8 @@
 package com.practice.drm.frontui;
 
 import com.practice.drm.clients.customer.*;
+import com.practice.drm.clients.exchange.ExchangeClient;
+import com.practice.drm.clients.exchange.ExchangeRateDto;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import java.util.List;
 public class FrontUiService {
 
     private final CustomerClient customerClient;
+    private final ExchangeClient exchangeClient;
 
     @CircuitBreaker(name = "customer-client", fallbackMethod = "getMainPageDataFallback")
     @Retry(name = "customer-client")
@@ -93,5 +96,22 @@ public class FrontUiService {
     ) {
         log.error("Customer edit accounts service unavailable for user: {}. Error: {}", login, ex.getMessage());
         return List.of("Сервис редактирования профиля временно недоступен. Попробуйте позже.");
+    }
+
+    @CircuitBreaker(name = "exchange-client", fallbackMethod = "getExchangeRatesFallback")
+    @Retry(name = "exchange-client")
+    public List<ExchangeRateDto> getExchangeRates() {
+        log.debug("Fetching exchange rates");
+        return exchangeClient.getRates();
+    }
+
+    public List<ExchangeRateDto> getExchangeRatesFallback(Exception ex) {
+        log.error("Exchange service unavailable. Using default rates. Error: {}", ex.getMessage());
+
+        return List.of(
+                new ExchangeRateDto("Рубль", "RUB", 1.0),
+                new ExchangeRateDto("Доллар", "USD", 95.0),
+                new ExchangeRateDto("Юань", "CNY", 13.5)
+        );
     }
 }

@@ -21,8 +21,15 @@ resilience4j:
         minimumNumberOfCalls: 5
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
+      exchange-client:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
   retry:
     instances:
       customer-client:
+        maxAttempts: 3
+        waitDuration: 500ms
+      exchange-client:
         maxAttempts: 3
         waitDuration: 500ms
