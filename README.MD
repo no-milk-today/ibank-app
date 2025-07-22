@@ -10,6 +10,9 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - **Fraud**  
   Provides endpoints to check if a customer is fraudulent. It stores fraud check history and uses a service to determine fraud status.
 
+- **Exchange**  
+  Manages currency exchange rates for the banking system. Provides real-time currency rates relative to RUB (base currency) and handles rate updates. Supports RUB, USD, and CNY currencies. The service stores exchange rates in PostgreSQL and integrates with the Exchange Generator service for automatic rate updates.
+
 - **Eureka Server**  
   Acts as a service discovery server for all microservices.
 
@@ -23,7 +26,7 @@ This project is composed of multiple microservices using the Netflix stack (Eure
   Routes incoming requests to the appropriate microservices. It is built using Spring Cloud Gateway and provides load balancing, routing, and fallback capabilities. The gateway integrates with Eureka for service discovery and uses filters to handle cross-cutting concerns like error handling and circuit breaking.
 
 - **FRONT UI**  
-  Provides a web user interface using Thymeleaf. The service runs on port `8085` and integrates with other microservices via Feign clients. It exposes endpoints such as `/` for the landing page (redirecting to `/main`) and `/main?login={login}` to render the main page with dynamic user data.
+  Provides a web user interface using Thymeleaf. The service runs on port `8085` and integrates with other microservices via Feign clients. It exposes endpoints such as `/` for the landing page (redirecting to `/main`) and `/main?login={login}` to render the main page with dynamic user data. The UI automatically updates exchange rates every second using JavaScript.
   
 ## Technologies
 
@@ -31,6 +34,7 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - Spring Cloud (Eureka, OpenFeign, Load Balancer)
 - Netflix OSS
 - Resilience4j (Circuit breaker and Retry)
+- PostgreSQL
 - Maven
 
 ## Service Endpoints
@@ -41,6 +45,8 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - **Example:**  
   - **GET** `/api/v1/customers/public`  
     Routes the request to the Customer service.
+  - **GET** `/api/rates`  
+    Routes the request to the Exchange service for currency rates.
 
 ### Customer Microservice
 
@@ -59,6 +65,14 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - **POST** `/api/v1/customers/user/{login}/editUserAccounts`  
   Updates user profile and account settings. Accepts JSON body with `name`, `birthdate`, and `accounts` fields.
 
+### Exchange Microservice
+
+- **GET** `/api/rates`  
+  Retrieves current currency exchange rates. Returns a JSON array with exchange rate information for all supported currencies (RUB, USD, CNY).
+
+- **PUT** `/api/rates/update`  
+  Updates currency exchange rates. Accepts a JSON array of exchange rate objects with `title`, `name`, and `value` fields.
+
 ### Fraud Microservice
 
 - **GET** `/api/v1/fraud-check/{customerId}`  
@@ -72,8 +86,8 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 
 ### Clients Module
 
-- Provides Feign clients for inter-service communication such as contacting the Fraud and Notification services.
-- The Feign clients are defined to resolve service names (e.g. \`http://fraud\`, \`http://notification\`) and load balance using Spring Cloud LoadBalancer.
+- Provides Feign clients for inter-service communication such as contacting the Fraud, Notification, and Exchange services.
+- The Feign clients are defined to resolve service names (e.g. `http://fraud`, `http://notification`, `http://exchange`) and load balance using Spring Cloud LoadBalancer.
 
 ### FRONT UI Microservice
 
@@ -81,10 +95,10 @@ This project is composed of multiple microservices using the Netflix stack (Eure
   Redirects to the main page.
   
 - **GET** `/main?login={login}`  
-  Renders the main page using Thymeleaf and loads dynamic user data for the specified user.
+  Renders the main page using Thymeleaf and loads dynamic user data for the specified user. Automatically fetches and displays current exchange rates.
 
-- **GET** `/signup`
-- Displays the customer registration form.
+- **GET** `/signup`  
+  Displays the customer registration form.
 
 - **POST** `/signup`  
   Registers a new customer. Accepts form data with `login`, `password`, `confirm_password`, `name`, `email`, and `birthdate` fields.
@@ -95,7 +109,18 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - **POST** `/user/{login}/editUserAccounts`  
   Processes user account update form submission. Accepts form data with `name`, `birthdate`, and `accounts` fields.
 
-  
+## Architecture Overview
+
+The system consists of the following microservices running on different ports:
+
+- **Eureka Server**: `8761` - Service discovery
+- **Customer**: `8081` - User management and accounts
+- **Fraud**: `8082` - Fraud detection
+- **Notification**: `8083` - Notification handling  
+- **API Gateway**: `8080` - Request routing and load balancing
+- **Front UI**: `8085` - Web user interface
+- **Exchange**: `8086` - Currency exchange rates management
+
 ## Running the Project
 
 1. Ensure you have Java and Maven installed.
@@ -108,7 +133,6 @@ This project is composed of multiple microservices using the Netflix stack (Eure
    mvn spring-boot:run
     ```
 4. Access the application (api-gateway) at `http://localhost:8080`.
-
 5. Access the Eureka dashboard at `http://localhost:8761` to see all registered services.
 
 ## Usage Examples
@@ -152,4 +176,55 @@ Content-Type: application/json
     "USD"
   ]
 }
+```
+
+### Get current exchange rates
+```bash
+GET http://localhost:8080/api/rates
+Accept: application/json
+```
+
+**Response:**
+```json
+[
+  {
+    "title": "Рубль",
+    "name": "RUB", 
+    "value": 1.0
+  },
+  {
+    "title": "Доллар",
+    "name": "USD",
+    "value": 93.50
+  },
+  {
+    "title": "Юань", 
+    "name": "CNY",
+    "value": 13.20
+  }
+]
+```
+
+### Update exchange rates
+```bash
+PUT http://localhost:8086/api/rates/update
+Content-Type: application/json
+
+[
+  {
+    "title": "Рубль",
+    "name": "RUB",
+    "value": 1.0
+  },
+  {
+    "title": "Доллар",
+    "name": "USD",
+    "value": 94.00
+  },
+  {
+    "title": "Юань",
+    "name": "CNY",
+    "value": 13.50
+  }
+]
 ```
