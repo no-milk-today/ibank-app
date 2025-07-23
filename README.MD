@@ -13,6 +13,9 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - **Exchange**  
   Manages currency exchange rates for the banking system. Provides real-time currency rates relative to RUB (base currency) and handles rate updates. Supports RUB, USD, and CNY currencies. The service stores exchange rates in PostgreSQL and integrates with the Exchange Generator service for automatic rate updates.
 
+- **Exchange Generator**  
+  A separate service that provides exchange rates for RUB, USD, and CNY. Updates the Exchange service with new rates every 5 seconds via Feign Client. It uses JSON file with exchange rates as a data source (using Round Robin strategy for rate selection).
+
 - **Eureka Server**  
   Acts as a service discovery server for all microservices.
 
@@ -120,6 +123,7 @@ The system consists of the following microservices running on different ports:
 - **API Gateway**: `8080` - Request routing and load balancing
 - **Front UI**: `8085` - Web user interface
 - **Exchange**: `8086` - Currency exchange rates management
+- **Exchange Generator**: `8087` - Automatic exchange rate generation
 
 ## Running the Project
 
