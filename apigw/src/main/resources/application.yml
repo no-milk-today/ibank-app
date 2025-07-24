@@ -16,7 +16,7 @@ spring:
         - id: front-ui
           uri: lb://FRONT-UI
           predicates:
-            - Path=/main/**, /signup/**, /user/**, /css/**, /js/**   # все пути фронтенда
+            - Path=/main/**, /, /signup/**, /user/**, /css/**, /js/**   # все пути фронтенда
         - id: exchange
           uri: lb://EXCHANGE
           predicates:
