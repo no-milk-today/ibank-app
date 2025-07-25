@@ -17,7 +17,7 @@ public class SecurityConfig {
                         // всё что обслуживает Front-UI, пропускаем
                         .pathMatchers("/", "/main/**", "/signup/**", "/favicon.ico", "/images/**",
                                 "/css/**", "/js/**", "/webjars/**",
-                                "/oauth2/authorization/**", "/login/oauth2/code/**")
+                                "/oauth2/authorization/**", "/login/oauth2/code/**", "/logout")
                         .permitAll()
                         // public JS-endpoint курсов валют
                         .pathMatchers("/api/rates/**").permitAll()

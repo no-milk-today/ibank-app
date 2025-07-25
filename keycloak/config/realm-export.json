@@ -27,7 +27,10 @@
         "http://localhost:8085",
         "http://localhost:8080"
       ],
-      "rootUrl": "http://localhost:8085"
+      "rootUrl": "http://localhost:8085",
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8080/*"
+      }
     },
     {
       "clientId": "apigateway",
@@ -85,7 +88,13 @@
       "attributes": {
         "client_credentials.use_refresh_token": "false"
       },
-      "defaultClientScopes": [ "roles" ]
+      "defaultClientScopes": [ "roles" ],
+      "serviceAccountRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users"
+        ]
+      }
     }
   ],
 

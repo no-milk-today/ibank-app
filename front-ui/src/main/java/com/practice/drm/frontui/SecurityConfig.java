@@ -10,6 +10,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
+import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.SecurityFilterChain;
@@ -19,6 +21,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final ClientRegistrationRepository clientRegistrationRepository;
     private final KeycloakUserSyncService userSyncService;
 
     /**
@@ -41,36 +44,29 @@ public class SecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        OidcClientInitiatedLogoutSuccessHandler oidcLogoutHandler =
+            new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
+        // после выхода уходим на базовый URL клиента
+        oidcLogoutHandler.setPostLogoutRedirectUri("{baseUrl}");
+
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                // форма регистрации доступна всем
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/signup/**", "/css/**", "/js/**").permitAll()
-                        .anyRequest().authenticated()
-                )
-                // логин через Keycloak с кастомным user service
-                .oauth2Login(oauth -> oauth
-                        .loginPage("/oauth2/authorization/keycloak") // 302 на Keycloak
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .oidcUserService(oidcUserService()) // используем наш кастомный сервис
-                        )
-                )
-                // выход -> redirect на Keycloak logout
-                .logout(logout -> logout
-                        .logoutSuccessHandler((req, resp, auth) -> {
-                            // remove JSESSIONID and ОIDC-cookie
-                            req.getSession(false);
-                            // prepare Keycloak logout URL
-                            String logoutUri = "http://localhost:8090/realms/bank-realm"
-                                    + "/protocol/openid-connect/logout"
-                                    + "?post_logout_redirect_uri=http://localhost:8080/";
-                            resp.sendRedirect(logoutUri);
-                        }))
-                // проверяем JWT для внутренних REST-вызовов фронта (если появятся)
-                .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+            .csrf(AbstractHttpConfigurer::disable)
+            // публичные страницы
+            .authorizeHttpRequests(auth ->
+                auth.requestMatchers("/signup/**", "/css/**", "/js/**").permitAll()
+                    .anyRequest().authenticated()
+            )
+            .oauth2Login(oauth ->
+                oauth
+                    .loginPage("/oauth2/authorization/keycloak")
+                    .userInfoEndpoint(user -> user.oidcUserService(oidcUserService()))
+            )
+            .logout(logout -> logout
+                .logoutSuccessHandler(oidcLogoutHandler)
+            )
+            .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
 
         return http.build();
     }
 }
-
