@@ -15,8 +15,8 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(ex -> ex
                         // всё что обслуживает Front-UI, пропускаем
-                        .pathMatchers("/", "/main/**", "/signup/**", "/favicon.ico", "/images/**",
-                                "/css/**", "/js/**", "/webjars/**",
+                        .pathMatchers("/", "/main/**", "/signup/**", "/user/**",
+                                "/css/**", "/js/**", "/webjars/**", "/favicon.ico", "/images/**",
                                 "/oauth2/authorization/**", "/login/oauth2/code/**", "/logout")
                         .permitAll()
                         // public JS-endpoint курсов валют
