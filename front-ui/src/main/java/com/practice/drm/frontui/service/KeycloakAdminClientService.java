@@ -42,32 +42,44 @@ public class KeycloakAdminClientService {
                                    String email,
                                    String fullName) {
 
-        return getToken().flatMap(token -> {
-            var userPayload = Map.of(
-                    "username", username,
-                    "enabled", true,
-                    "email", email,
-                    "firstName", fullName
-            );
+        // Разбиваем fullName на firstName и lastName
+        String firstName;
+        String lastName;
+        if (fullName != null && fullName.contains(" ")) {
+            int i = fullName.indexOf(' ');
+            firstName = fullName.substring(0, i).trim();
+            lastName = fullName.substring(i + 1).trim();
+        } else {
+            firstName = fullName != null ? fullName : "";
+            lastName = "";
+        }
 
-            return webClient.post()
-                    .uri(props.adminUri("/users"))
-                    .headers(h -> h.setBearerAuth(token))
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(userPayload)
-                    .exchangeToMono(resp -> {
-                        if (resp.statusCode().is2xxSuccessful()) {
-                            // Location header contains created userId
-                            String location = resp.headers().asHttpHeaders().getFirst("Location");
-                            return Mono.just(location.substring(location.lastIndexOf('/') + 1));
-                        }
-                        return resp.bodyToMono(String.class)
-                                .flatMap(err -> Mono.error(new IllegalStateException(err)));
-                    })
-                    /* then set credential */
-                    .flatMap(userId -> setPassword(token, userId, password).thenReturn(userId));
-        });
+        var userPayload = Map.of(
+                "username", username,
+                "enabled", true,
+                "email", email,
+                "firstName", firstName,
+                "lastName", lastName
+        );
+
+        return getToken().flatMap(token ->
+                webClient.post()
+                        .uri(props.adminUri("/users"))
+                        .headers(h -> h.setBearerAuth(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(userPayload)
+                        .exchangeToMono(resp -> {
+                            if (resp.statusCode().is2xxSuccessful()) {
+                                String location = resp.headers().asHttpHeaders().getFirst("Location");
+                                return Mono.just(location.substring(location.lastIndexOf('/') + 1));
+                            }
+                            return resp.bodyToMono(String.class)
+                                    .flatMap(err -> Mono.error(new IllegalStateException(err)));
+                        })
+                        .flatMap(userId -> setPassword(token, userId, password).thenReturn(userId))
+        );
     }
+
 
     private Mono<Void> setPassword(String token, String userId, String password) {
         var cred = Map.of(
