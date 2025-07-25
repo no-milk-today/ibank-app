@@ -1,6 +1,6 @@
 server:
   port: 8085
-
+  forward-headers-strategy: native # если приложение стоит за gateway и нужны корректные redirect-uri
 spring:
   application:
     name: front-ui
@@ -12,13 +12,22 @@ spring:
             client-id: front-ui
             authorization-grant-type: authorization_code
             redirect-uri: "http://localhost:8085/login/oauth2/code/{registrationId}"
-            scope: openid,profile,roles
+            scope: openid,profile,email
         provider:
           keycloak:
             issuer-uri: http://localhost:8090/realms/bank-realm
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8090/realms/bank-realm
+
+# ─── Keycloak admin-client (service account front-ui-admin) ──────────────────────
+keycloak:
+  admin:
+    server-url:  http://localhost:8090
+    realm:       bank-realm
+    client-id:   front-ui-admin
+    client-secret: front-ui-admin-secret
+
 
 eureka:
   client:

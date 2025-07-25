@@ -26,7 +26,7 @@ public class Customer {
     @Column(unique = true, nullable = false)
     private String login;
 
-    @Column(nullable = false)
+    @Column
     private String passwordHash;
 
     @Column(nullable = false)

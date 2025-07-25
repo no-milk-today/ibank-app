@@ -37,15 +37,19 @@ public class CustomerService {
             return new CustomerRegistrationResponse(false, validationErrors);
         }
 
-        var customer = Customer.builder()
+        Customer.CustomerBuilder builder = Customer.builder()
                 .login(request.login())
-                .passwordHash(BCrypt.hashpw(request.password(), BCrypt.gensalt()))
                 .name(request.name())
                 .email(request.email())
-                .birthdate(request.birthdate())
-                .build();
-        // todo: check if email valid
-        // todo: check if not taken
+                .birthdate(request.birthdate());
+        if (request.password() != null) {
+            // hash the password if it is provided
+            builder.passwordHash(BCrypt.hashpw(request.password(), BCrypt.gensalt()));
+        } else {
+            // in OAuth scenario we do not save the password
+            builder.passwordHash(null);
+        }
+        var customer = builder.build();
 
         // If we don’t say ‘save and FLUSH’ then the ID will be null.
         customerRepository.saveAndFlush(customer);
@@ -77,15 +81,6 @@ public class CustomerService {
             errors.add("Login cannot be empty");
         }
 
-        if (request.password() == null || request.confirmPassword() == null ||
-                !request.password().equals(request.confirmPassword())) {
-            errors.add("Passwords do not match");
-        }
-
-        if (request.password() == null || request.password().trim().isEmpty()) {
-            errors.add("Password cannot be empty");
-        }
-
         if (request.name() == null || request.name().trim().isEmpty()) {
             errors.add("First and Last name are required");
         }
@@ -96,6 +91,15 @@ public class CustomerService {
 
         if (request.birthdate() == null || !over18(request.birthdate())) {
             errors.add("You must be at least 18 years old");
+        }
+
+        // to fix frontUiService.registerCustomer(login, null, null, name, email, birthdate) problem
+        if (request.password() != null || request.confirmPassword() != null) {
+            if (request.password() == null || request.confirmPassword() == null) {
+                errors.add("Password cannot be empty");
+            } else if (!request.password().equals(request.confirmPassword())) {
+                errors.add("Passwords do not match");
+            }
         }
 
         if (customerRepository.existsByLogin(request.login())) {
@@ -109,10 +113,10 @@ public class CustomerService {
         return errors;
     }
 
-    public void fraudCheckFallback(CustomerRegistrationRequest request, Throwable ex) {
-        log.error("Fraud check service is unavailable. Fallback method invoked for request: {}", request, ex);
-        // Логика fallback: например, логирование, сохранение статуса, отправка уведомления
-        throw new IllegalStateException("Fraud service unavailable. Please try later.", ex);
+    public CustomerRegistrationResponse fraudCheckFallback(CustomerRegistrationRequest request, Throwable ex) {
+        log.error("Fraud check service is unavailable. Falling back for request: {}", request, ex);
+        return new CustomerRegistrationResponse(false,
+                List.of("Fraud service unavailable. Please try again later."));
     }
 
     private boolean validateEmail(String email) {

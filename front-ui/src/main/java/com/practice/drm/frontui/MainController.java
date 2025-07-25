@@ -1,8 +1,11 @@
 package com.practice.drm.frontui;
 
+import com.practice.drm.frontui.service.KeycloakAdminClientService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +23,7 @@ import java.util.Map;
 public class MainController {
 
     private final FrontUiService frontUiService;
+    private final KeycloakAdminClientService keycloakAdminClientService;
 
     @GetMapping("/")
     public String index() {
@@ -27,7 +31,15 @@ public class MainController {
     }
 
     @GetMapping("/main")
-    public String main(@RequestParam("login") String login, Model model) {
+    public String main(Authentication authentication, Model model) {
+        String login;
+        if (authentication != null && authentication.getPrincipal() instanceof OidcUser oidcUser) {
+            login = oidcUser.getPreferredUsername();
+        } else {
+            // todo: fallback на пустую строку или прямая ошибка
+            login = "";
+        }
+
         log.info("Main page requested for user: {}", login);
 
         try {
@@ -102,32 +114,28 @@ public class MainController {
     ) {
         log.info("Registration request for user: {}", login);
 
-        try {
-            var response = frontUiService.registerCustomer(
-                    login, password, confirmPassword, name, email, birthdate
-            );
-
-            if (response.success()) {
-                // Успешная регистрация - редирект на главную страницу
-                return "redirect:/main?login=" + login;
-            } else {
-                // Есть ошибки - возвращаем на форму с ошибками
-                model.addAttribute("errors", response.errors());
-                model.addAttribute("login", login);
-                model.addAttribute("name", name);
-                model.addAttribute("email", email);
-                model.addAttribute("birthdate", birthdate);
-                return "signup";
-            }
-        } catch (Exception e) {
-            log.error("Registration error for user: {}", login, e);
-            model.addAttribute("errors", List.of("Ошибка при регистрации: " + e.getMessage()));
-            model.addAttribute("login", login);
-            model.addAttribute("name", name);
-            model.addAttribute("email", email);
-            model.addAttribute("birthdate", birthdate);
+        if (!password.equals(confirmPassword)) {
+            model.addAttribute("errors", List.of("Пароли не совпадают"));
             return "signup";
         }
+
+        /* Keycloak */
+        try {
+            keycloakAdminClientService.createUser(login, password, email, name).block();
+        } catch (Exception ex) {
+            model.addAttribute("errors", List.of("Keycloak: " + ex.getMessage()));
+            return "signup";
+        }
+
+        /* Customer profile */
+        var resp = frontUiService.registerCustomer(login, null, null, name, email, birthdate);
+        if (!resp.success()) {
+            model.addAttribute("errors", resp.errors());
+            return "signup";
+        }
+
+        // redirect to OAuth2-login flow
+        return "redirect:/oauth2/authorization/keycloak";
     }
 
     @PostMapping("/user/{login}/editUserAccounts")

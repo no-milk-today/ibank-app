@@ -40,6 +40,31 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - PostgreSQL
 - Maven
 
+## Security & Authentication
+
+### OAuth2-Login через Keycloak
+- Использован **Keycloak** как OAuth2 Authorization Server (порт `8090`, realm `bank-realm`).
+- Front-UI (`front-ui`) настроен на **Authorization Code Flow**:
+  - public client `front-ui`
+  - redirect URI: `http://localhost:8085/login/oauth2/code/keycloak`
+- API Gateway (`apigateway`) и все микросервисы (`customer`, `exchange`, `notification`, `fraud`) настроены как **resource-servers**:
+  - проверяют JWT от Keycloak (issuer-uri `http://localhost:8090/realms/bank-realm`).
+  - межсервисный вызов защищён через **client-credentials** (confidential clients c сервис-аккаунтами).
+
+### Just-In-Time Provisioning
+- При первом логине пользователя через Keycloak Front-UI автоматически синхронизирует профиль:
+  1. OAuth2-flow завершён → Spring Security получает `OidcUser`.
+  2. `KeycloakUserSyncService` подслушивает `AuthenticationSuccessEvent` и вызывает CustomerClient для создания/обновления профиля в Customer-сервисе.
+- При регистрации через Front-UI форма `/signup`:
+  1. создаёт пользователя в Keycloak Admin API (`front-ui-admin` client, роль `manage-users`);
+  2. затем создаёт профиль в Customer-сервисе;
+  3. редиректит на стандартный OAuth2-login (`/oauth2/authorization/keycloak`), и пользователь сразу входит в систему.
+
+### Дальнейшее использование
+- Все защищённые REST-эндпоинты (`/api/v1/customers/**`, `/api/rates/**`, и т.д.) требуют валидный JWT.
+- Публичные пути: `/signup/**`, статика, `/api/rates/**` (для динамического JS-запроса курсов без токена).
+
+
 ## Service Endpoints
 
 ### API Gateway
