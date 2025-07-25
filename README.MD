@@ -50,7 +50,8 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - API Gateway (`apigateway`) и все микросервисы (`customer`, `exchange`, `notification`, `fraud`) настроены как **resource-servers**:
   - проверяют JWT от Keycloak (issuer-uri `http://localhost:8090/realms/bank-realm`).
   - межсервисный вызов защищён через **client-credentials** (confidential clients c сервис-аккаунтами).
-
+- При входе пользователь попадает на IDP, получает JWT, который Gateway проксирует во внутренние микросервисы (TokenRelay).
+- При выходе Front-UI делает SSO-logout в Keycloak и перенаправляет обратно на корень приложения.
 ### Just-In-Time Provisioning
 - При первом логине пользователя через Keycloak Front-UI автоматически синхронизирует профиль:
   1. OAuth2-flow завершён → Spring Security получает `OidcUser`.

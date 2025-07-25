@@ -14,7 +14,14 @@ public class SecurityConfig {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(ex -> ex
-                        .pathMatchers("/signup/**", "/", "/api/rates/**").permitAll()
+                        // всё что обслуживает Front-UI, пропускаем
+                        .pathMatchers("/", "/main/**", "/signup/**", "/favicon.ico", "/images/**",
+                                "/css/**", "/js/**", "/webjars/**",
+                                "/oauth2/authorization/**", "/login/oauth2/code/**")
+                        .permitAll()
+                        // public JS-endpoint курсов валют
+                        .pathMatchers("/api/rates/**").permitAll()
+                        // остальные REST-path → только с JWT
                         .anyExchange().authenticated())
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(Customizer.withDefaults()));

@@ -19,6 +19,8 @@ public class KeycloakUserSyncService {
     /**
      * Synchronizes the OIDC user with the Customer service.
      *
+     * Parses fullname into firstName and lastName for Keycloak usage.
+     *
      * @param oidcUser user from Keycloak
      * @return same OidcUser after synchronization
      */
@@ -26,19 +28,29 @@ public class KeycloakUserSyncService {
         var username = oidcUser.getPreferredUsername();
         var email = oidcUser.getEmail();
 
-        // Получаем полное имя из клейма "name" или через getFullName()
-        String fullName = null;
-        if (oidcUser.getClaims().containsKey("name")) {
-            fullName = oidcUser.getClaim("name");
-        } else {
-            fullName = oidcUser.getFullName();
-        }
-        if (fullName == null) {
+        // Получаем полное имя из claim "name" или getFullName()
+        String fullName = oidcUser.getClaims().containsKey("name")
+                ? oidcUser.getClaim("name")
+                : oidcUser.getFullName();
+
+        if (fullName == null || fullName.isBlank()) {
             fullName = username;
         }
 
-        log.info("Attempt to synchronize User: username={}, email={}, fullName={}",
-                 username, email, fullName);
+        log.info("Attempt to synchronize User: username={}, email={}, fullName={}", username, email, fullName);
+
+        // get firstName and lastName
+        String firstName;
+        String lastName;
+
+        if (fullName.contains(" ")) {
+            int index = fullName.indexOf(" ");
+            firstName = fullName.substring(0, index).trim();
+            lastName = fullName.substring(index + 1).trim();
+        } else {
+            firstName = fullName.trim();
+            lastName = "";
+        }
 
         try {
             // Извлекаем дату рождения из claim "birthdate"
@@ -65,7 +77,6 @@ public class KeycloakUserSyncService {
             } else {
                 log.warn("User sync returned errors for {}: {}", username, response.errors());
             }
-
         } catch (Exception ex) {
             log.error("Failed to synchronize user {}: {}", username, ex.getMessage(), ex);
         }

@@ -58,8 +58,15 @@ public class SecurityConfig {
                 )
                 // выход -> redirect на Keycloak logout
                 .logout(logout -> logout
-                        .logoutSuccessUrl("http://localhost:8090/realms/bank-realm/protocol/openid-connect/logout?redirect_uri=http://localhost:8085/")
-                )
+                        .logoutSuccessHandler((req, resp, auth) -> {
+                            // remove JSESSIONID and ОIDC-cookie
+                            req.getSession(false);
+                            // prepare Keycloak logout URL
+                            String logoutUri = "http://localhost:8090/realms/bank-realm"
+                                    + "/protocol/openid-connect/logout"
+                                    + "?post_logout_redirect_uri=http://localhost:8080/";
+                            resp.sendRedirect(logoutUri);
+                        }))
                 // проверяем JWT для внутренних REST-вызовов фронта (если появятся)
                 .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
 
