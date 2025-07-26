@@ -62,7 +62,7 @@ This project is composed of multiple microservices using the Netflix stack (Eure
   3. редиректит на стандартный OAuth2-login (`/oauth2/authorization/keycloak`), и пользователь сразу входит в систему.
 
 ### Дальнейшее использование
-- Все защищённые REST-эндпоинты (`/api/v1/customers/**`, `/api/rates/**`, и т.д.) требуют валидный JWT.
+- Все защищённые REST-эндпоинты (`/api/v1/customers/**` и т.д.) требуют валидный JWT.
 - Публичные пути: `/signup/**`, статика, `/api/rates/**` (для динамического JS-запроса курсов без токена).
 
 
