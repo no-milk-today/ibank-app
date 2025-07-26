@@ -1,14 +1,16 @@
 {
   "realm": "bank-realm",
   "enabled": true,
+  "defaultRoles": ["ROLE_USER"],
 
   "roles": {
     "realm": [
       { "name": "ROLE_USER",               "description": "End-user role" },
       { "name": "ROLE_CUSTOMER_SERVICE",   "description": "Customer microservice access" },
       { "name": "ROLE_EXCHANGE_SERVICE",   "description": "Exchange microservice access" },
-      { "name": "ROLE_NOTIFICATION_SERVICE","description": "Notification microservice access" },
+      { "name": "ROLE_NOTIFICATION_SERVICE", "description": "Notification microservice access" },
       { "name": "ROLE_FRAUD_SERVICE",      "description": "Fraud microservice access" },
+      { "name": "ROLE_CASH_SERVICE",         "description": "Cash microservice access" },
       { "name": "ROLE_GATEWAY",            "description": "API Gateway" }
     ]
   },
@@ -30,7 +32,8 @@
       "rootUrl": "http://localhost:8085",
       "attributes": {
         "post.logout.redirect.uris": "http://localhost:8080/*"
-      }
+      },
+      "defaultClientScopes": ["profile", "email", "roles"]
     },
     {
       "clientId": "apigateway",
@@ -74,6 +77,14 @@
       "serviceAccountsEnabled": true,
       "publicClient": false,
       "secret": "fraud-secret",
+      "defaultClientScopes": [ "roles" ]
+    },
+    {
+      "clientId": "cash",
+      "protocol": "openid-connect",
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "secret": "cash-secret",
       "defaultClientScopes": [ "roles" ]
     },
     {
