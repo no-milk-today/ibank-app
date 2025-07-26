@@ -5,6 +5,8 @@ import com.practice.drm.clients.customer.Currency;
 import com.practice.drm.clients.fraud.FraudClient;
 import com.practice.drm.clients.notification.NotificationClient;
 import com.practice.drm.clients.notification.NotificationRequest;
+import com.practice.drm.customer.exception.AccountNotFoundException;
+import com.practice.drm.customer.exception.CustomerNotFoundException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.AllArgsConstructor;
@@ -50,6 +52,18 @@ public class CustomerService {
             builder.passwordHash(null);
         }
         var customer = builder.build();
+
+        // create default accounts for all available currencies
+        var defaultAccounts = Arrays.stream(Currency.values())
+                .map(currency -> Account.builder()
+                        .currency(currency)
+                        .balance(BigDecimal.ZERO)
+                        .customer(customer)
+                        .build())
+                .toList();
+        customer.setAccounts(defaultAccounts);
+        log.debug("Created {} default accounts for user: {}",
+                defaultAccounts.size(), customer.getLogin());
 
         // If we don’t say ‘save and FLUSH’ then the ID will be null.
         customerRepository.saveAndFlush(customer);
@@ -255,5 +269,42 @@ public class CustomerService {
         customerRepository.save(customer);
 
         return Collections.emptyList();
+    }
+
+    public CustomerDto getCustomerByLogin(String login) {
+        var customer = customerRepository.findByLogin(login)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found: " + login));
+
+        return new CustomerDto(
+                customer.getId(),
+                customer.getLogin(),
+                customer.getName(),
+                customer.getEmail(),
+                customer.getBirthdate(),
+                customer.getAccounts().stream()
+                        .map(account -> new AccountDto(
+                                account.getCurrency(),
+                                account.getCurrency().getCode(),
+                                account.getCurrency().getTitle(),
+                                account.getBalance(),
+                                true
+                        ))
+                        .toList()
+        );
+    }
+
+    public void updateAccountBalance(String login, String currency, BigDecimal newBalance) {
+        Customer customer = customerRepository.findByLogin(login)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found: " + login));
+
+        Account account = customer.getAccounts().stream()
+                .filter(acc -> currency.equals(acc.getCurrency().getCode()))
+                .findFirst()
+                .orElseThrow(() -> new AccountNotFoundException("Account with currency " + currency + " not found for user " + login));
+
+        account.setBalance(newBalance);
+        customerRepository.save(customer);
+
+        log.info("Account balance updated successfully for user {}: {} = {}", login, currency, newBalance);
     }
 }

@@ -1,5 +1,8 @@
 package com.practice.drm.frontui;
 
+import com.practice.drm.clients.cash.CashAction;
+import com.practice.drm.clients.cash.CashClient;
+import com.practice.drm.clients.cash.CashOperationRequest;
 import com.practice.drm.clients.customer.*;
 import com.practice.drm.clients.exchange.ExchangeClient;
 import com.practice.drm.clients.exchange.ExchangeRateDto;
@@ -9,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -19,6 +23,7 @@ public class FrontUiService {
 
     private final CustomerClient customerClient;
     private final ExchangeClient exchangeClient;
+    private final CashClient cashClient;
 
     @CircuitBreaker(name = "customer-client", fallbackMethod = "getMainPageDataFallback")
     @Retry(name = "customer-client")
@@ -113,5 +118,20 @@ public class FrontUiService {
                 new ExchangeRateDto("Доллар", "USD", 95.0),
                 new ExchangeRateDto("Юань", "CNY", 13.5)
         );
+    }
+
+    public List<String> processCashOperation(String login, String currency, BigDecimal value, String action) {
+        try {
+            // с формы приходит action = "PUT" или "GET", такие дела..
+            var cashAction = "PUT".equals(action) ? CashAction.DEPOSIT : CashAction.WITHDRAW;
+            var request = new CashOperationRequest(login, currency, value, cashAction);
+
+            var response = cashClient.processCashOperation(request);
+
+            return response.isSuccess() ? List.of() : response.getErrors();
+        } catch (Exception e) {
+            log.error("Error calling cash service for user {}: {}", login, e.getMessage(), e);
+            return List.of("Cash service unavailable: " + e.getMessage());
+        }
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -155,5 +156,24 @@ public class MainController {
 
         List<String> errors = frontUiService.editUserAccounts(login, name, birthdate, accounts);
         return redirectToMainWithErrors(login, model, "userAccountsErrors", errors);
+    }
+
+    @PostMapping("/user/{login}/cash")
+    public String processCash(
+            @PathVariable("login") String login,
+            @RequestParam("currency") String currency,
+            @RequestParam("value") BigDecimal value,
+            @RequestParam("action") String action,
+            Model model) {
+
+        log.info("Cash operation request for user {}: {} {} {}", login, action, value, currency);
+
+        List<String> errors = frontUiService.processCashOperation(login, currency, value, action);
+
+        if (!errors.isEmpty()) {
+            return redirectToMainWithErrors(login, model, "cashErrors", errors);
+        }
+
+        return "redirect:/main";
     }
 }

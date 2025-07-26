@@ -8,9 +8,9 @@
       { "name": "ROLE_USER",               "description": "End-user role" },
       { "name": "ROLE_CUSTOMER_SERVICE",   "description": "Customer microservice access" },
       { "name": "ROLE_EXCHANGE_SERVICE",   "description": "Exchange microservice access" },
-      { "name": "ROLE_NOTIFICATION_SERVICE", "description": "Notification microservice access" },
+      { "name": "ROLE_NOTIFICATION_SERVICE","description": "Notification microservice access" },
       { "name": "ROLE_FRAUD_SERVICE",      "description": "Fraud microservice access" },
-      { "name": "ROLE_CASH_SERVICE",         "description": "Cash microservice access" },
+      { "name": "ROLE_CASH_SERVICE",       "description": "Cash microservice access" },
       { "name": "ROLE_GATEWAY",            "description": "API Gateway" }
     ]
   },
@@ -80,14 +80,6 @@
       "defaultClientScopes": [ "roles" ]
     },
     {
-      "clientId": "cash",
-      "protocol": "openid-connect",
-      "serviceAccountsEnabled": true,
-      "publicClient": false,
-      "secret": "cash-secret",
-      "defaultClientScopes": [ "roles" ]
-    },
-    {
       "clientId": "front-ui-admin",
       "name": "Front-UI Admin Client",
       "protocol": "openid-connect",
@@ -99,13 +91,15 @@
       "attributes": {
         "client_credentials.use_refresh_token": "false"
       },
-      "defaultClientScopes": [ "roles" ],
-      "serviceAccountRoles": {
-        "realm-management": [
-          "manage-users",
-          "view-users"
-        ]
-      }
+      "defaultClientScopes": [ "roles" ]
+    },
+    {
+      "clientId": "cash",
+      "protocol": "openid-connect",
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "secret": "cash-secret",
+      "defaultClientScopes": [ "roles" ]
     }
   ],
 

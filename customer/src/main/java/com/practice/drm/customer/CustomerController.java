@@ -1,13 +1,11 @@
 package com.practice.drm.customer;
 
-import com.practice.drm.clients.customer.EditPasswordRequest;
-import com.practice.drm.clients.customer.MainPageData;
-import com.practice.drm.clients.customer.CustomerRegistrationRequest;
-import com.practice.drm.clients.customer.CustomerRegistrationResponse;
-import com.practice.drm.clients.customer.EditUserAccountsRequest;
+import com.practice.drm.clients.customer.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -48,5 +46,20 @@ public class CustomerController {
             @RequestBody EditPasswordRequest req
     ) {
         return customerService.editPassword(login, req);
+    }
+
+    @GetMapping("/{login}")
+    public CustomerDto getCustomer(@PathVariable("login") String login) {
+        return customerService.getCustomerByLogin(login);
+    }
+
+    @PutMapping("/{login}/accounts/{currency}/balance")
+    public void updateAccountBalance(
+            @PathVariable("login") String login,
+            @PathVariable("currency") String currency,
+            @RequestBody BigDecimal newBalance) {
+
+        log.info("Updating account balance for user {}: {} {} = {}", login, currency, "new balance", newBalance);
+        customerService.updateAccountBalance(login, currency, newBalance);
     }
 }

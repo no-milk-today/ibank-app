@@ -3,18 +3,22 @@ server:
 spring:
   application:
     name: cash
-  datasource:
-    url: jdbc:postgresql://localhost:5432/cash
-    username: ${PG_USER:-pguser}
-    password: password
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-    show-sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8090/realms/bank-realm
+      client:
+        registration:
+          keycloak:
+            client-id: cash
+            client-secret: cash-secret
+            authorization-grant-type: client_credentials
+            scope: roles
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8090/realms/bank-realm
+
 eureka:
   client:
     serviceUrl:
