@@ -5,7 +5,7 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 ## Modules
 
 - **Customer**  
-  Handles customer registration and related actions. It uses Resilience4j circuit breaker and retry functionalities. The service communicates with the Fraud service using Feign clients.
+  Handles customer registration and account management. It uses Resilience4j circuit breaker and retry functionalities. The service communicates with the Fraud service using Feign clients.
 
 - **Fraud**  
   Provides endpoints to check if a customer is fraudulent. It stores fraud check history and uses a service to determine fraud status.
@@ -30,7 +30,10 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 
 - **FRONT UI**  
   Provides a web user interface using Thymeleaf. The service runs on port `8085` and integrates with other microservices via Feign clients. It exposes endpoints such as `/` for the landing page (redirecting to `/main`) and `/main?login={login}` to render the main page with dynamic user data. The UI automatically updates exchange rates every second using JavaScript.
-  
+ 
+- **Cash**  
+  Handles cash-in (deposit) and cash-out (withdraw) operations on user accounts.
+
 ## Technologies
 
 - Spring Boot
@@ -39,32 +42,16 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - Resilience4j (Circuit breaker and Retry)
 - PostgreSQL
 - Maven
+- Keycloak (Authorization & Authentication)
 
 ## Security & Authentication
 
-### OAuth2-Login через Keycloak
-- Использован **Keycloak** как OAuth2 Authorization Server (порт `8090`, realm `bank-realm`).
-- Front-UI (`front-ui`) настроен на **Authorization Code Flow**:
-  - public client `front-ui`
-  - redirect URI: `http://localhost:8085/login/oauth2/code/keycloak`
-- API Gateway (`apigateway`) и все микросервисы (`customer`, `exchange`, `notification`, `fraud`) настроены как **resource-servers**:
-  - проверяют JWT от Keycloak (issuer-uri `http://localhost:8090/realms/bank-realm`).
-  - межсервисный вызов защищён через **client-credentials** (confidential clients c сервис-аккаунтами).
-- При входе пользователь попадает на IDP, получает JWT, который Gateway проксирует во внутренние микросервисы (TokenRelay).
-- При выходе Front-UI делает SSO-logout в Keycloak и перенаправляет обратно на корень приложения.
-### Just-In-Time Provisioning
-- При первом логине пользователя через Keycloak Front-UI автоматически синхронизирует профиль:
-  1. OAuth2-flow завершён → Spring Security получает `OidcUser`.
-  2. `KeycloakUserSyncService` подслушивает `AuthenticationSuccessEvent` и вызывает CustomerClient для создания/обновления профиля в Customer-сервисе.
-- При регистрации через Front-UI форма `/signup`:
-  1. создаёт пользователя в Keycloak Admin API (`front-ui-admin` client, роль `manage-users`);
-  2. затем создаёт профиль в Customer-сервисе;
-  3. редиректит на стандартный OAuth2-login (`/oauth2/authorization/keycloak`), и пользователь сразу входит в систему.
-
-### Дальнейшее использование
-- Все защищённые REST-эндпоинты (`/api/v1/customers/**` и т.д.) требуют валидный JWT.
-- Публичные пути: `/signup/**`, статика, `/api/rates/**` (для динамического JS-запроса курсов без токена).
-
+- **Keycloak** (OIDC, port 8090, realm: `bank-realm`) provides authentication and JWT tokens.
+- **Front-UI** uses Authorization Code Grant with Keycloak.
+- **API Gateway** and all backend microservices (Customer, Exchange, Notification, Fraud, Cash) are set as resource servers and validate Keycloak JWT tokens.
+- Service-to-service calls use confidential Keycloak clients (service accounts) for authentication.
+- On login, user is redirected to Keycloak, receives JWT (proxied by Gateway), and all service calls are authorized. On logout, SSO session is ended via Keycloak.
+- **Just-In-Time Provisioning:** on first login, Front-UI syncs profile with Customer service.
 
 ## Service Endpoints
 
@@ -138,6 +125,47 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - **POST** `/user/{login}/editUserAccounts`  
   Processes user account update form submission. Accepts form data with `name`, `birthdate`, and `accounts` fields.
 
+- **POST** `/user/{login}/cash` — send cash-in/cash-out request (form invokes Cash service via Backend). Form accepts 'PUT'/'GET' as an action
+- **POST** `/user/{login}/cash`
+  - **JSON body:**
+    ```json
+    {
+      "login": "john",
+      "currency": "RUB",
+      "value": 1000.00,
+      "action": "PUT"
+    }
+    ```
+  - **Valid values for `action`:** `"PUT"` or `"GET"`. (only form FRONT-UI)
+  
+### Cash Microservice
+
+- **POST** `/api/v1/cash/operation`
+  - **JSON body:**
+    ```json
+    {
+      "login": "john",
+      "currency": "RUB",
+      "value": 1000.00,
+      "action": "DEPOSIT"
+    }
+    ```
+  - **Valid values for `action`:** `"DEPOSIT"` or `"WITHDRAW"`.
+  - **Response:**
+    ```json
+    {
+      "success": true,
+      "errors": []
+    }
+    ```
+    - **Example of insufficient funds response:**
+    ```json
+    {
+      "success": false,
+      "errors": ["Insufficient funds. Available: 20.00 RUB"]
+    }
+    ```
+
 ## Architecture Overview
 
 The system consists of the following microservices running on different ports:
@@ -150,6 +178,7 @@ The system consists of the following microservices running on different ports:
 - **Front UI**: `8085` - Web user interface
 - **Exchange**: `8086` - Currency exchange rates management
 - **Exchange Generator**: `8087` - Automatic exchange rate generation
+- **Cash**: `8088` - withdrawal and deposit operations
 
 ## Running the Project
 
@@ -258,3 +287,39 @@ Content-Type: application/json
   }
 ]
 ```
+
+### DEPOSIT cash operation:
+```http
+POST http://localhost:8088/api/v1/cash/operation
+Content-Type: application/json
+
+{
+  "login": "john",
+  "currency": "RUB",
+  "value": 500.00,
+  "action": "DEPOSIT"
+}
+```
+
+### WITHDRAW cash:
+```http
+POST http://localhost:8088/api/v1/cash/operation
+Content-Type: application/json
+
+{
+  "login": "john",
+  "currency": "USD",
+  "value": 20.00,
+  "action": "WITHDRAW"
+}
+```
+**Insufficient funds:**
+```json
+{
+  "success": false,
+  "errors": ["Insufficient funds. Available: 15.00 USD"]
+}
+```
+
+### using Front-UI:
+В браузере — форма отправляет POST `/user/{login}/cash`, параметры: currency, value, action ("DEPOSIT"/"WITHDRAW"). Front-UI вызывает Cash сервис, результат и ошибки отображаются на /main.
