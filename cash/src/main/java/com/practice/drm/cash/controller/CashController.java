@@ -6,7 +6,6 @@ import com.practice.drm.clients.cash.CashOperationResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +23,6 @@ public class CashController {
     private final CashService cashService;
 
     @PostMapping("/operation")
-    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<CashOperationResponse> processCashOperation(
             @RequestBody CashOperationRequest request) {
 
