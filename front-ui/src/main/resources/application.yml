@@ -8,13 +8,6 @@ spring:
     openfeign:
       oauth2:
         enabled: true
-        client:
-          config:
-            # Имя должно совпадать с @FeignClient("customer")
-            customer:
-              oauth2:
-                enabled: true
-                client-registration-id: keycloak
   security:
     oauth2:
       client:
