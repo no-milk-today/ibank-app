@@ -64,8 +64,7 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                 .logoutSuccessHandler(oidcLogoutHandler)
-            )
-            .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+            );
 
         return http.build();
     }
