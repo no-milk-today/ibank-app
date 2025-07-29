@@ -22,6 +22,7 @@
     <module>exchange</module>
     <module>exchange-generator</module>
     <module>cash</module>
+    <module>transfer</module>
   </modules>
 
   <properties>
