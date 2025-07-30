@@ -3,25 +3,32 @@ package com.practice.drm.transfer.service;
 import com.practice.drm.clients.customer.AccountDto;
 import com.practice.drm.clients.customer.CustomerClient;
 import com.practice.drm.clients.customer.CustomerDto;
+import com.practice.drm.clients.exchange.ExchangeClient;
+import com.practice.drm.clients.exchange.ExchangeRateDto;
 import com.practice.drm.clients.fraud.FraudClient;
 import com.practice.drm.clients.notification.NotificationClient;
 import com.practice.drm.clients.notification.NotificationRequest;
 import com.practice.drm.clients.transfer.TransferRequest;
 import com.practice.drm.clients.transfer.TransferResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TransferService {
 
     private final CustomerClient customerClient;
     private final FraudClient fraudClient;
     private final NotificationClient notificationClient;
+    private final ExchangeClient exchangeClient;
 
     public TransferResponse transfer(String login, TransferRequest req) {
 
@@ -53,8 +60,19 @@ public class TransferService {
             return buildError(ownErrors, otherErrors);
         }
 
-        var amount = req.value();
-        if (fromAcc.get().balance().compareTo(amount) < 0) {
+        var debitAmount = req.value();
+
+        BigDecimal creditAmount;
+        try {
+            creditAmount = convertCurrency(debitAmount, req.fromCurrency(), req.toCurrency());
+        } catch (Exception e) {
+            log.error("Currency conversion failed: {}", e.getMessage(), e);
+            ownErrors.add("Currency conversion failed: " + e.getMessage());
+            return TransferResponse.errors(ownErrors);
+        }
+
+        // Проверка достаточности средств (всегда по исходной валюте)
+        if (fromAcc.get().balance().compareTo(debitAmount) < 0) {
             ownErrors.add("Insufficient funds");
             return TransferResponse.errors(ownErrors);
         }
@@ -63,15 +81,18 @@ public class TransferService {
         // todo: make it transactional
         customerClient.updateAccountBalance(
                 login, req.fromCurrency(),
-                fromAcc.get().balance().subtract(amount));
+                fromAcc.get().balance().subtract(debitAmount));
+
         customerClient.updateAccountBalance(
                 receiver.login(), req.toCurrency(),
-                toAcc.get().balance().add(amount));
+                toAcc.get().balance().add(creditAmount));
 
         /* Notification */
         var msg = String.format(
-                "Перевод %.2f %s со счёта %s на %s",
-                amount, req.fromCurrency(), req.fromCurrency(), req.toCurrency());
+                "Перевод %.2f %s -> %.2f %s от %s к %s",
+                debitAmount, req.fromCurrency(),
+                creditAmount, req.toCurrency(),
+                sender.login(), receiver.login());
 
         notificationClient.sendNotification(
                 new NotificationRequest(sender.id(), sender.name(), msg)
@@ -102,5 +123,37 @@ public class TransferService {
             return TransferResponse.errors(own);
         }
         return TransferResponse.otherErrors(other);
+    }
+
+    private BigDecimal convertCurrency(BigDecimal amount, String fromCurrency, String toCurrency) {
+        if (fromCurrency.equals(toCurrency)) {
+            return amount;
+        }
+
+        List<ExchangeRateDto> rates = exchangeClient.getRates();
+        double fromRate = getRateValue(rates, fromCurrency);
+        double toRate = getRateValue(rates, toCurrency);
+
+        var fromRateBD = BigDecimal.valueOf(fromRate);
+        var toRateBD = BigDecimal.valueOf(toRate);
+
+        return amount.multiply(fromRateBD)
+                .divide(toRateBD, 0, RoundingMode.HALF_UP);  // 0 decimal places
+    }
+
+
+    /**
+     * Получает курс валюты к рублю
+     */
+    private double getRateValue(List<ExchangeRateDto> rates, String currency) {
+        if ("RUB".equals(currency)) {
+            return 1.0; // Рубль - базовая валюта
+        }
+
+        return rates.stream()
+                .filter(rate -> rate.getName().equals(currency))
+                .findFirst()
+                .map(ExchangeRateDto::getValue)
+                .orElseThrow(() -> new IllegalArgumentException("Exchange rate not found for " + currency));
     }
 }

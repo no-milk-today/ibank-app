@@ -34,6 +34,9 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - **Cash**  
   Handles cash-in (deposit) and cash-out (withdraw) operations on user accounts.
 
+- **Transfer**  
+  Handles money transfers between customers accounts.
+
 ## Technologies
 
 - Spring Boot
@@ -165,6 +168,37 @@ This project is composed of multiple microservices using the Netflix stack (Eure
       "errors": ["Insufficient funds. Available: 20.00 RUB"]
     }
     ```
+### Transfer Microservice
+
+- **POST** `/user/{login}/transfer`  
+  Transfers money between accounts. Supports transfers within same user accounts or to different users with automatic currency conversion.
+  - **JSON body:**
+    ```
+    {
+      "fromCurrency": "USD",
+      "toCurrency": "RUB", 
+      "value": 100.00,
+      "toLogin": "recipient_user"
+    }
+    ```
+  - **Response:**
+    ```
+    {
+      "success": true,
+      "transferErrors": [],
+      "transferOtherErrors": []
+    }
+    ```
+  - **Currency conversion examples:**
+    - Same currency (RUB → RUB): No conversion, direct transfer
+    - Different currencies (USD → RUB): Automatic conversion using Exchange service rates
+    - Cross-currency (USD → CNY): Conversion through RUB as base currency
+
+- **Example transfer scenarios:**
+  - **Same currency transfer:** 100 RUB → 100 RUB (no Exchange service call)
+  - **Currency conversion:** 10 USD → 950 RUB (using rate USD=95.0)
+  - **Cross-currency:** 10 USD → 70.37 CNY (USD→RUB→CNY conversion)
+
 
 ## Architecture Overview
 
@@ -179,6 +213,7 @@ The system consists of the following microservices running on different ports:
 - **Exchange**: `8086` - Currency exchange rates management
 - **Exchange Generator**: `8087` - Automatic exchange rate generation
 - **Cash**: `8088` - withdrawal and deposit operations
+- **Transfer**: `8089` - Money transfers with currency conversion
 
 ## Running the Project
 
