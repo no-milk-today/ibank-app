@@ -176,4 +176,26 @@ public class MainController {
 
         return "redirect:/main";
     }
+
+    @PostMapping("/user/{login}/transfer")
+    public String processTransfer(
+            @PathVariable("login") String login,
+            @RequestParam("from_currency") String fromCurrency,
+            @RequestParam("to_currency") String toCurrency,
+            @RequestParam("value") BigDecimal value,
+            @RequestParam("to_login") String toLogin,
+            Model model) {
+
+        log.info("Transfer request for user {}: {} {} -> {} {}, to user: {}",
+                 login, value, fromCurrency, value, toCurrency, toLogin);
+
+        List<String> errors = frontUiService.processTransferOperation(login, fromCurrency, toCurrency, value, toLogin);
+        if (!errors.isEmpty()) {
+            // если перевод самому себе - transferErrors, иначе transferOtherErrors
+            var errorField = login.equals(toLogin) ? "transferErrors" : "transferOtherErrors";
+            return redirectToMainWithErrors(login, model, errorField, errors);
+        }
+
+        return "redirect:/main";
+    }
 }

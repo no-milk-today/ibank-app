@@ -6,6 +6,8 @@ import com.practice.drm.clients.cash.CashOperationRequest;
 import com.practice.drm.clients.customer.*;
 import com.practice.drm.clients.exchange.ExchangeClient;
 import com.practice.drm.clients.exchange.ExchangeRateDto;
+import com.practice.drm.clients.transfer.TransferClient;
+import com.practice.drm.clients.transfer.TransferRequest;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,6 +27,7 @@ public class FrontUiService {
     private final CustomerClient customerClient;
     private final ExchangeClient exchangeClient;
     private final CashClient cashClient;
+    private final TransferClient transferClient;
 
     @CircuitBreaker(name = "customer-client", fallbackMethod = "getMainPageDataFallback")
     @Retry(name = "customer-client")
@@ -133,5 +137,36 @@ public class FrontUiService {
             log.error("Error calling cash service for user {}: {}", login, e.getMessage(), e);
             return List.of("Cash service unavailable: " + e.getMessage());
         }
+    }
+
+    @CircuitBreaker(name = "transfer-client", fallbackMethod = "processTransferOperationFallback")
+    @Retry(name = "transfer-client")
+    public List<String> processTransferOperation(String login, String fromCurrency, String toCurrency,
+                                                 BigDecimal value, String toLogin) {
+        try {
+            log.info("Processing transfer for user {}: {} {} -> {} {}, to user: {}",
+                     login, value, fromCurrency, value, toCurrency, toLogin);
+
+            var request = new TransferRequest(fromCurrency, toCurrency, value, toLogin);
+            var response = transferClient.transfer(login, request);
+
+            if (response.isSuccess()) {
+                return List.of();
+            } else {
+                List<String> allErrors = new ArrayList<>();
+                allErrors.addAll(response.getTransferErrors());
+                allErrors.addAll(response.getTransferOtherErrors());
+                return allErrors;
+            }
+        } catch (Exception e) {
+            log.error("Error calling transfer service for user {}: {}", login, e.getMessage(), e);
+            return List.of("Transfer service unavailable: " + e.getMessage());
+        }
+    }
+
+    public List<String> processTransferOperationFallback(String login, String fromCurrency, String toCurrency,
+                                                         BigDecimal value, String toLogin, Exception ex) {
+        log.error("Transfer service unavailable for user: {}. Error: {}", login, ex.getMessage());
+        return List.of("Сервис переводов временно недоступен. Попробуйте позже.");
     }
 }

@@ -1,8 +1,8 @@
 package com.practice.drm.transfer.service;
 
 import com.practice.drm.clients.customer.AccountDto;
-import com.practice.drm.clients.customer.CustomerDto;
 import com.practice.drm.clients.customer.CustomerClient;
+import com.practice.drm.clients.customer.CustomerDto;
 import com.practice.drm.clients.fraud.FraudClient;
 import com.practice.drm.clients.notification.NotificationClient;
 import com.practice.drm.clients.notification.NotificationRequest;
@@ -11,7 +11,6 @@ import com.practice.drm.clients.transfer.TransferResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +59,8 @@ public class TransferService {
             return TransferResponse.errors(ownErrors);
         }
 
-        /* 4. Обновляем балансы */
+        /* Обновляем балансы */
+        // todo: make it transactional
         customerClient.updateAccountBalance(
                 login, req.fromCurrency(),
                 fromAcc.get().balance().subtract(amount));
@@ -68,7 +68,7 @@ public class TransferService {
                 receiver.login(), req.toCurrency(),
                 toAcc.get().balance().add(amount));
 
-        /* 5. Notification */
+        /* Notification */
         var msg = String.format(
                 "Перевод %.2f %s со счёта %s на %s",
                 amount, req.fromCurrency(), req.fromCurrency(), req.toCurrency());
