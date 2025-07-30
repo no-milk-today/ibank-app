@@ -1,0 +1,20 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: native # Профиль native необходимо включать для поддержки хранилища в локальной файловой системе
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/config-repo/ # Фолдер, из которого загружаются конфигурации
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    preferIpAddress: true
