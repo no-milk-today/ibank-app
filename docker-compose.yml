@@ -3,7 +3,7 @@ services:
     container_name: postgres-bank
     image: postgres:15
     environment:
-      POSTGRES_USER: ${EXCHANGE_DB_USERNAME}
+      POSTGRES_USER: pguser
       POSTGRES_PASSWORD: password
       PGDATA: /data/postgres
     volumes:

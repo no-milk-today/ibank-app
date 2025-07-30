@@ -1,0 +1,22 @@
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+logging:
+  level:
+    com.practice.drm.exchangegenerator: INFO
+    org.springframework.scheduling: INFO
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      exchange-client:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        minimumNumberOfCalls: 3
+  retry:
+    instances:
+      exchange-client:
+        maxAttempts: 3
+        waitDuration: 500ms

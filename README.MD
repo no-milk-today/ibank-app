@@ -37,6 +37,10 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - **Transfer**  
   Handles money transfers between customers accounts.
 
+- **Config Server**  
+  Externalized/Distributed Config. It uses Spring Cloud Config to serve configuration properties from local files.
+  **Config Clients:** `customer`, `exchange-generator`, `notification` (to demonstrate externalized configuration pattern).
+
 ## Technologies
 
 - Spring Boot
@@ -214,6 +218,7 @@ The system consists of the following microservices running on different ports:
 - **Exchange Generator**: `8087` - Automatic exchange rate generation
 - **Cash**: `8088` - withdrawal and deposit operations
 - **Transfer**: `8089` - Money transfers with currency conversion
+- **Config Server**: `8888` - Externalized configuration management
 
 ## Running the Project
 1. ```docker-compose up -d```. Then import realm configuration from `keycloak/config/realm-export.json` into Keycloak.
@@ -234,7 +239,7 @@ The system consists of the following microservices running on different ports:
    ```bash
    mvn clean install
     ```
-5. Run the services (start the Eureka Server first, then the others):
+5. Run the services (start the Eureka Server first, then the config-server and then the others):
    ```bash
    mvn spring-boot:run
     ```
