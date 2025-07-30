@@ -216,7 +216,12 @@ The system consists of the following microservices running on different ports:
 - **Transfer**: `8089` - Money transfers with currency conversion
 
 ## Running the Project
-1. ```docker-compose up -d```
+1. ```docker-compose up -d```. Then import realm configuration from `keycloak/config/realm-export.json` into Keycloak.
+   - **Note:** Ensure that the Keycloak server is running on port `8090` and the realm is named `bank-realm`.
+   - The Keycloak server will be used for authentication and authorization.
+   - Navigate to `Clients` → `front-ui-admin` → `Service accounts roles`. 
+   - **Add the following roles:** `realm-management → manage-users`, `realm-management → view-users`
+
 2. connect to pgadmin and create a databases:
    ```
    CREATE DATABASE customer;
@@ -229,7 +234,7 @@ The system consists of the following microservices running on different ports:
    ```bash
    mvn clean install
     ```
-5. Run the services (for example, start the Eureka Server first):
+5. Run the services (start the Eureka Server first, then the others):
    ```bash
    mvn spring-boot:run
     ```
