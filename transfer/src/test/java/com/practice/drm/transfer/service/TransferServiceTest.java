@@ -1,0 +1,114 @@
+package com.practice.drm.transfer.service;
+
+import com.practice.drm.clients.customer.AccountDto;
+import com.practice.drm.clients.customer.Currency;
+import com.practice.drm.clients.customer.CustomerDto;
+import com.practice.drm.clients.customer.CustomerClient;
+import com.practice.drm.clients.fraud.FraudCheckResponse;
+import com.practice.drm.clients.fraud.FraudClient;
+import com.practice.drm.clients.notification.NotificationClient;
+import com.practice.drm.clients.notification.NotificationRequest;
+import com.practice.drm.clients.transfer.TransferRequest;
+import com.practice.drm.clients.transfer.TransferResponse;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.tuple;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class TransferServiceTest {
+
+    @Mock
+    private CustomerClient customerClient;
+    @Mock
+    private FraudClient fraudClient;
+    @Mock
+    private NotificationClient notificationClient;
+    @InjectMocks
+    private TransferService underTest;
+
+    private static CustomerDto buildCustomer(int id, String login, BigDecimal balance) {
+        var accDTO = new AccountDto(
+                Currency.RUB,
+                Currency.RUB.getCode(),
+                Currency.RUB.getTitle(),
+                balance,
+                true
+        );
+        return new CustomerDto(
+                id,
+                login,
+                "Name " + login,
+                login + "@example.com",
+                LocalDate.of(1995, 1, 1),
+                List.of(accDTO)
+        );
+    }
+
+    @Test
+    void transfer_success_external() {
+        var alice = buildCustomer(1, "alice", BigDecimal.valueOf(1000));
+        var bob   = buildCustomer(2, "bob",   BigDecimal.valueOf(200));
+        when(customerClient.getCustomer("alice")).thenReturn(alice);
+        when(customerClient.getCustomer("bob")).thenReturn(bob);
+        when(fraudClient.isFraudster(1))
+            .thenReturn(new FraudCheckResponse(false));
+
+        var req = new TransferRequest(
+            "RUB",
+            "RUB",
+            BigDecimal.valueOf(150),
+            "bob"
+        );
+
+        var resp = underTest.transfer("alice", req);
+
+        assertTrue(resp.isSuccess());
+        // balances
+        verify(customerClient).updateAccountBalance("alice", "RUB", BigDecimal.valueOf(850));
+        verify(customerClient).updateAccountBalance("bob",   "RUB", BigDecimal.valueOf(350));
+        // notifications
+        ArgumentCaptor<NotificationRequest> captor = ArgumentCaptor.forClass(NotificationRequest.class);
+        verify(notificationClient, times(2)).sendNotification(captor.capture());
+        List<NotificationRequest> sent = captor.getAllValues();
+        assertThat(sent)
+            .extracting(NotificationRequest::toCustomerId, NotificationRequest::toCustomerName)
+            .containsExactlyInAnyOrder(
+                tuple(1, "Name alice"),
+                tuple(2, "Name bob")
+            );
+    }
+
+    @Test
+    void transfer_fraud_detected() {
+        var alice = buildCustomer(1, "alice", BigDecimal.valueOf(500));
+        when(customerClient.getCustomer("alice")).thenReturn(alice);
+        when(fraudClient.isFraudster(1))
+            .thenReturn(new com.practice.drm.clients.fraud.FraudCheckResponse(true));
+
+        var req = new TransferRequest(
+            "RUB", "RUB", BigDecimal.valueOf(100), "bob"
+        );
+
+        var resp = underTest.transfer("alice", req);
+
+        assertFalse(resp.isSuccess());
+        assertThat(resp.getTransferErrors()).containsExactly("Fraud detected");
+        verify(customerClient, never()).updateAccountBalance(anyString(), anyString(), any());
+        verify(notificationClient, never()).sendNotification(any());
+    }
+}
