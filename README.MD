@@ -216,18 +216,27 @@ The system consists of the following microservices running on different ports:
 - **Transfer**: `8089` - Money transfers with currency conversion
 
 ## Running the Project
-
-1. Ensure you have Java and Maven installed.
-2. Build the project:
+1. ```docker-compose up -d```
+2. connect to pgadmin and create a databases:
+   ```
+   CREATE DATABASE customer;
+   CREATE DATABASE exchange;
+   CREATE DATABASE fraud;
+   CREATE DATABASE notification;
+    ```
+3. Ensure you have Java and Maven installed.
+4. Build the project:
    ```bash
    mvn clean install
     ```
-3. Run the services (for example, start the Eureka Server first):
+5. Run the services (for example, start the Eureka Server first):
    ```bash
    mvn spring-boot:run
     ```
-4. Access the application (api-gateway) at `http://localhost:8080`.
-5. Access the Eureka dashboard at `http://localhost:8761` to see all registered services.
+6. Access the application (api-gateway) at `http://localhost:8080`.
+7. Register new customer `http://localhost:8080/signup`.
+8. Do logout (via `http://localhost:8080/logout` and create one more customer (to test transferring money between them).
+9. Access the Eureka dashboard at `http://localhost:8761` to see all registered services.
 
 ## Usage Examples
 
