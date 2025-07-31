@@ -1,4 +1,4 @@
-package com.practice.drm.customer.security;
+package com.practice.drm.customer.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

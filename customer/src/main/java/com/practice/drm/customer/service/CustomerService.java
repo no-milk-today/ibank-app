@@ -1,10 +1,14 @@
-package com.practice.drm.customer;
+package com.practice.drm.customer.service;
 
 import com.practice.drm.clients.customer.*;
 import com.practice.drm.clients.customer.Currency;
 import com.practice.drm.clients.fraud.FraudClient;
 import com.practice.drm.clients.notification.NotificationClient;
 import com.practice.drm.clients.notification.NotificationRequest;
+import com.practice.drm.customer.model.Account;
+import com.practice.drm.customer.repository.AccountRepository;
+import com.practice.drm.customer.model.Customer;
+import com.practice.drm.customer.repository.CustomerRepository;
 import com.practice.drm.customer.exception.AccountNotFoundException;
 import com.practice.drm.customer.exception.CustomerNotFoundException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;

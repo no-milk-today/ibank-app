@@ -1,4 +1,4 @@
-package com.practice.drm.customer;
+package com.practice.drm.customer.config;
 
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
