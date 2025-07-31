@@ -1,6 +1,7 @@
-package com.practice.drm.customer;
+package com.practice.drm.customer.controller;
 
 import com.practice.drm.clients.customer.*;
+import com.practice.drm.customer.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;

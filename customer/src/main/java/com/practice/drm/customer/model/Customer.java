@@ -1,4 +1,4 @@
-package com.practice.drm.customer;
+package com.practice.drm.customer.model;
 
 import jakarta.persistence.*;
 import lombok.*;
