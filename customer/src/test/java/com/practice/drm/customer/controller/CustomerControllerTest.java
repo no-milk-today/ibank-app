@@ -1,9 +1,10 @@
 package com.practice.drm.customer.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.practice.drm.clients.customer.*;
 import com.practice.drm.customer.config.SecurityConfig;
 import com.practice.drm.customer.service.CustomerService;
+
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -25,8 +27,8 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -34,31 +36,34 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(CustomerController.class)
 @Import(SecurityConfig.class)
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 class CustomerControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
+    private static final String TEST_USERNAME = "john";
+    private static final String TEST_EMAIL = "john@example.com";
+    private static final LocalDate TEST_BIRTHDATE = LocalDate.of(1990, 1, 1);
+
+    private final MockMvc mockMvc;
+    private final ObjectMapper objectMapper;
 
     @MockitoBean
-    private JwtDecoder jwtDecoder;
-
+    private final JwtDecoder jwtDecoder;
     @MockitoBean
-    private CustomerService customerService;
+    private final CustomerService customerService;
 
-    private Jwt testJwt;
+    private final Jwt testJwt = createTestJwt(TEST_USERNAME);
 
-    @BeforeEach
-    void setupJwtDecoder() {
-        // минимальный Jwt с нужным claim preferred_username
-        testJwt = Jwt.withTokenValue("token")
+    private Jwt createTestJwt(String username) {
+        return Jwt.withTokenValue("test-token")
                 .header("alg", "none")
-                .claim("preferred_username", "john")
+                .claim("preferred_username", username)
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(3600))
                 .build();
+    }
 
+    @BeforeEach
+    void setupJwtDecoder() {
         when(jwtDecoder.decode(anyString())).thenReturn(testJwt);
     }
 
@@ -66,7 +71,7 @@ class CustomerControllerTest {
     @DisplayName("POST /api/v1/customers/signup returns JSON registration response")
     void registerCustomer_returnsJson() throws Exception {
         var req = new CustomerRegistrationRequest(
-                "john", "pass", "pass", "John Doe", "john@example.com", LocalDate.of(1990, 1, 1)
+                TEST_USERNAME, "pass", "pass", "John Doe", TEST_EMAIL, TEST_BIRTHDATE
         );
         var resp = new CustomerRegistrationResponse(true, List.of());
         when(customerService.registerCustomer(any())).thenReturn(resp);
@@ -92,35 +97,48 @@ class CustomerControllerTest {
     @Test
     @DisplayName("GET /api/v1/customers/main requires auth and invokes service")
     void main_requiresJwt_andInvokesService() throws Exception {
-        var mainData = new MainPageData(
-                "john", "John Doe", "john@example.com",
-                LocalDate.of(1990, 1, 1),
-                List.of(), List.of(), List.of(), null, null, null, null, null
-        );
-        when(customerService.getMainData("john")).thenReturn(mainData);
+        var mainData = createTestMainPageData(TEST_USERNAME, "John Doe", TEST_EMAIL);
+        when(customerService.getMainData(TEST_USERNAME)).thenReturn(mainData);
 
         mockMvc.perform(get("/api/v1/customers/main")
-                        .with(jwt().jwt(jwt -> jwt.claim("preferred_username", "john")))
-                        .param("login", "john")
-                )
+                        .with(jwt().jwt(jwt -> jwt.claim("preferred_username", TEST_USERNAME)))
+                        .param("login", TEST_USERNAME))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.login").value("john"))
+                .andExpect(jsonPath("$.login").value(TEST_USERNAME))
                 .andExpect(jsonPath("$.name").value("John Doe"));
 
-        verify(customerService).getMainData("john");
+        verify(customerService).getMainData(TEST_USERNAME);
     }
 
     @Test
     @DisplayName("PUT /api/v1/customers/{login}/accounts/{currency}/balance updates balance")
     void updateAccountBalance_requiresJwt() throws Exception {
-        BigDecimal newBal = BigDecimal.valueOf(500);
+        var newBalance = BigDecimal.valueOf(500);
 
-        mockMvc.perform(put("/api/v1/customers/john/accounts/USD/balance")
-                        .with(jwt().jwt(jwt -> jwt.claim("preferred_username", "john")))
+        mockMvc.perform(put("/api/v1/customers/" + TEST_USERNAME + "/accounts/USD/balance")
+                        .with(jwt().jwt(jwt -> jwt.claim("preferred_username", TEST_USERNAME)))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(newBal)))
+                        .content(objectMapper.writeValueAsBytes(newBalance)))
                 .andExpect(status().isOk());
 
-        verify(customerService).updateAccountBalance("john", "USD", newBal);
+        verify(customerService).updateAccountBalance(TEST_USERNAME, "USD", newBalance);
+    }
+
+    // утилитный метод для создания тестовых MainPageData
+    private MainPageData createTestMainPageData(String login, String name, String email) {
+        return new MainPageData(
+                login,
+                name,
+                email,
+                TEST_BIRTHDATE,
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of()
+        );
     }
 }
