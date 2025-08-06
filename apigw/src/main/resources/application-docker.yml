@@ -1,0 +1,42 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      default-filters:
+        - TokenRelay    # проксируем Authorization header
+        - PreserveHostHeader
+      routes:
+        - id: customer
+          uri: lb://CUSTOMER
+          predicates:
+            - Path=/api/v1/customers/**
+        - id: front-ui
+          uri: lb://FRONT-UI
+          predicates:
+            - Path=/main/**, /, /signup/**, /user/**, /css/**, /js/**, /webjars/**, /favicon.ico, /images/**, /oauth2/authorization/**, /login/oauth2/code/**, /logout
+          filters:  # ← добавить фильтры для этого роута (чтобы корректно работали редиректы)
+            - AddRequestHeader=X-Forwarded-Proto, http
+            - AddRequestHeader=X-Forwarded-Host, localhost:8080
+            - AddRequestHeader=X-Forwarded-Port, 8080
+        - id: exchange
+          uri: lb://EXCHANGE
+          predicates:
+            - Path=/api/rates/**
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak-bank:8080/realms/bank-realm
+          # Note: use container name (keycloak-bank) and internal port 8080,
+          # as from inside Docker network localhost is the container itself, not Keycloak.
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka
+    fetch-registry: true
+    register-with-eureka: true
