@@ -36,6 +36,12 @@
     <spring-cloud.version>2024.0.2</spring-cloud.version>
     <!-- Circuit Breaker and Retryable -->
     <resilience4j-version>2.3.0</resilience4j-version>
+    <!-- Jib plugin for building Docker images -->
+    <jib-maven-plugin.version>3.4.6</jib-maven-plugin.version>
+    <!-- Repository name for Docker images -->
+    <repo.name>prista</repo.name>
+    <!-- Image name for Docker images -->
+    <image>${repo.name}/${project.artifactId}:${project.version}</image>
   </properties>
 
   <dependencyManagement>
@@ -90,6 +96,42 @@
             <execution>
               <goals>
                 <goal>repackage</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>com.google.cloud.tools</groupId>
+          <artifactId>jib-maven-plugin</artifactId>
+          <version>${jib-maven-plugin.version}</version>
+          <configuration>
+            <from>
+              <image>
+                eclipse-temurin:21-jdk@sha256:1f3171966c0ca6b7151c56059bc70c40d3b880b4333feb91d5b09a68f159af3b
+              </image>
+              <platforms>
+                <platform>
+                  <architecture>arm64</architecture>
+                  <os>linux</os>
+                </platform>
+                <platform>
+                  <architecture>amd64</architecture>
+                  <os>linux</os>
+                </platform>
+              </platforms>
+            </from>
+            <to>
+              <tags>
+                <!-- Everytime we build the image, we want to have 2 images -->
+                <tag>latest</tag>
+              </tags>
+            </to>
+          </configuration>
+          <executions>
+            <execution>
+              <phase>package</phase>
+              <goals>
+                <goal>build</goal>
               </goals>
             </execution>
           </executions>

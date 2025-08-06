@@ -221,6 +221,8 @@ The system consists of the following microservices running on different ports:
 - **Config Server**: `8888` - Externalized configuration management
 
 ## Running the Project
+#### todo: ```mvn clean package -P build-docker-image```
+#### to avoid pushing the image: ```mvn clean package```
 1. ```docker-compose up -d```. Then import realm configuration from `keycloak/config/realm-export.json` into Keycloak.
    - **Note:** Ensure that the Keycloak server is running on port `8090` and the realm is named `bank-realm`.
    - The Keycloak server will be used for authentication and authorization.
