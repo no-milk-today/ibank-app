@@ -53,9 +53,6 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     networks:
       - spring
-    depends_on:
-      - postgres
-      - keycloak
   apigw:
     image: ${REPO_NAME}/apigw:latest
     container_name: apigw
@@ -63,9 +60,6 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_CONFIG_LOCATION=file:/app/resources/application-docker.yml
-    volumes:
-      - ./apigw/src/main/resources/application-docker.yml:/app/resources/application-docker.yml:ro
     networks:
       - spring
     depends_on:
