@@ -38,8 +38,8 @@ services:
     ports:
       - "8090:8080"
     networks:
-      - postgres
-      - spring
+      - postgres # для доступа к БД
+      - spring # для взаимодействия с Spring-сервисами
     restart: unless-stopped
     depends_on:
       - postgres
@@ -64,6 +64,49 @@ services:
       - spring
     depends_on:
       - eureka-server
+  config-server:
+    image: ${REPO_NAME}/config-server:latest
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,native
+    networks:
+      - spring
+      - postgres
+    depends_on:
+      - eureka-server
+  exchange:
+    image: ${REPO_NAME}/exchange:latest
+    container_name: exchange
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - spring
+      - postgres
+    depends_on:
+      - eureka-server
+      - postgres
+      - keycloak
+  exchange-generator:
+    image: ${REPO_NAME}/exchange-generator:latest
+    container_name: exchange-generator
+    ports:
+      - "8087:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    networks:
+      - spring
+      - postgres
+    depends_on:
+      - config-server
+      - eureka-server
+      - postgres
+      - keycloak
+      - exchange
 
 networks:
   postgres:
