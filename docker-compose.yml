@@ -53,6 +53,12 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     networks:
       - spring
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
   apigw:
     image: ${REPO_NAME}/apigw:latest
     container_name: apigw
@@ -75,7 +81,14 @@ services:
       - spring
       - postgres
     depends_on:
-      - eureka-server
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
   exchange:
     image: ${REPO_NAME}/exchange:latest
     container_name: exchange
@@ -83,6 +96,7 @@ services:
       - "8086:8086"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - PG_USER=${PG_USER}
     networks:
       - spring
       - postgres
@@ -102,11 +116,17 @@ services:
       - spring
       - postgres
     depends_on:
-      - config-server
-      - eureka-server
-      - postgres
-      - keycloak
-      - exchange
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy  # wait for config-server
+      postgres:
+        condition: service_started
+      keycloak:
+        condition: service_started
+      exchange:
+        condition: service_started
+
 
 networks:
   postgres:
