@@ -1,0 +1,27 @@
+server:
+  port: 8088
+spring:
+  application:
+    name: cash
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak-bank:8080/realms/bank-realm
+      client:
+        registration:
+          keycloak:
+            client-id: cash
+            client-secret: cash-secret
+            authorization-grant-type: client_credentials
+            scope: roles
+        provider:
+          keycloak:
+            issuer-uri: http://keycloak-bank:8080/realms/bank-realm
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    preferIpAddress: true # Use IP address instead of hostname (resolves Api Gateway issues)

@@ -181,6 +181,40 @@ services:
         condition: service_started
       keycloak:
         condition: service_started
+  cash:
+    image: ${REPO_NAME}/cash:latest
+    container_name: cash
+    ports:
+      - "8088:8088"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - spring
+      - postgres
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+      keycloak:
+        condition: service_started
+  transfer:
+    image: ${REPO_NAME}/transfer:latest
+    container_name: transfer
+    ports:
+      - "8089:8089"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - spring
+      - postgres
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+      keycloak:
+        condition: service_started
   apigw:
     image: ${REPO_NAME}/apigw:latest
     container_name: apigw
