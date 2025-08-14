@@ -53,17 +53,11 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     networks:
       - spring
-  apigw:
-    image: ${REPO_NAME}/apigw:latest
-    container_name: apigw
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    networks:
-      - spring
-    depends_on:
-      - eureka-server
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8761/actuator/health || exit 1" ]
+      interval: 5s
+      retries: 10
+      start_period: 20s
   config-server:
     image: ${REPO_NAME}/config-server:latest
     container_name: config-server
@@ -76,6 +70,11 @@ services:
       - postgres
     depends_on:
       - eureka-server
+    healthcheck:
+      test: curl --fail http://localhost:8888/actuator/health || exit 1
+      interval: 5s
+      retries: 10
+      start_period: 10s
   exchange:
     image: ${REPO_NAME}/exchange:latest
     container_name: exchange
@@ -90,6 +89,11 @@ services:
       - eureka-server
       - postgres
       - keycloak
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8086/actuator/health || exit 1" ]
+      interval: 5s
+      retries: 10
+      start_period: 20s
   exchange-generator:
     image: ${REPO_NAME}/exchange-generator:latest
     container_name: exchange-generator
@@ -102,11 +106,45 @@ services:
       - spring
       - postgres
     depends_on:
-      - config-server
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+      keycloak:
+        condition: service_started
+      exchange:
+        condition: service_healthy
+#  customer:
+#    image: ${REPO_NAME}/customer:latest
+#    container_name: customer
+#    ports:
+#      - "8081:8081"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+#      - PG_USER=${PG_USER}  # from .env file
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      - eureka-server
+#      - config-server
+#      - postgres
+#      - keycloak
+#      - exchange-generator
+  apigw:
+    image: ${REPO_NAME}/apigw:latest
+    container_name: apigw
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - spring
+    depends_on:
       - eureka-server
-      - postgres
-      - keycloak
-      - exchange
 
 networks:
   postgres:
