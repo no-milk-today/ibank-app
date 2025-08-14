@@ -5,7 +5,7 @@ spring:
     name: exchange
   datasource:
     url: jdbc:postgresql://postgres-bank:5432/exchange
-    username: amigoscode
+    username: ${PG_USER}
     password: password
   jpa:
     hibernate:
