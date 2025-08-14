@@ -7,7 +7,7 @@ spring:
 
   datasource:
     url: jdbc:postgresql://postgres-bank:5432/customer
-    username: ${PG_USER:-pguser}
+    username: ${PG_USER}
     password: password
     driver-class-name: org.postgresql.Driver # optional
   jpa:

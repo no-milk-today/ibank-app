@@ -4,4 +4,11 @@ spring:
   application:
     name: notification
   config:
-    import: configserver:http://localhost:8888
+    import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://localhost:8888}
+  # дополнительная защита от ситуации, когда сервис стартует быстрее, чем config-server
+  cloud:
+    config:
+      retry:
+        initial-interval: 2000
+        max-attempts: 10
+        multiplier: 1.5
