@@ -4,4 +4,11 @@ spring:
   application:
     name: customer
   config:
-    import: optional:configserver:http://127.0.0.1:8888 # Параметры подключения к Config Server
+    import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://localhost:8888}
+  # дополнительная защита от ситуации, когда сервис стартует быстрее, чем config-server
+  cloud:
+    config:
+      retry:
+        initial-interval: 2000
+        max-attempts: 10
+        multiplier: 1.5

@@ -82,6 +82,7 @@ services:
       - "8086:8086"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - PG_USER=${PG_USER}
     networks:
       - spring
       - postgres
@@ -116,24 +117,27 @@ services:
         condition: service_started
       exchange:
         condition: service_healthy
-#  customer:
-#    image: ${REPO_NAME}/customer:latest
-#    container_name: customer
-#    ports:
-#      - "8081:8081"
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=docker
-#      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-#      - PG_USER=${PG_USER}  # from .env file
-#    networks:
-#      - spring
-#      - postgres
-#    depends_on:
-#      - eureka-server
-#      - config-server
-#      - postgres
-#      - keycloak
-#      - exchange-generator
+  customer:
+    image: ${REPO_NAME}/customer:latest
+    container_name: customer
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - PG_USER=${PG_USER}  # from .env file
+    networks:
+      - spring
+      - postgres
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+      keycloak:
+        condition: service_started
   apigw:
     image: ${REPO_NAME}/apigw:latest
     container_name: apigw
