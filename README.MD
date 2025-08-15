@@ -50,6 +50,8 @@ This project is composed of multiple microservices using the Netflix stack (Eure
 - PostgreSQL
 - Maven
 - Keycloak (Authorization & Authentication)
+- Docker & Docker Compose
+- JIB Maven Plugin (for containerization)
 
 ## Security & Authentication
 
@@ -219,6 +221,11 @@ The system consists of the following microservices running on different ports:
 - **Cash**: `8088` - withdrawal and deposit operations
 - **Transfer**: `8089` - Money transfers with currency conversion
 - **Config Server**: `8888` - Externalized configuration management
+
+## Docker Deployment
+The project uses **JIB Maven Plugin** for containerization and **Docker Compose** for orchestration. 
+All microservices are configured to run in Docker containers with proper service discovery and networking.
+
 
 ## Running the Project
 #### todo: ```mvn clean package -P build-docker-image```

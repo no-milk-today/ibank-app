@@ -34,6 +34,15 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      # Основные hostname настройки:
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8090
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HTTP_ENABLED: true
+      KC_PROXY: edge
+      # Добавьте для обработки headers от Gateway:
+      KC_PROXY_HEADERS: xforwarded
     command: ["start-dev"]
     ports:
       - "8090:8080"
@@ -215,6 +224,17 @@ services:
         condition: service_started
       keycloak:
         condition: service_started
+  front-ui:
+    image: ${REPO_NAME}/front-ui:latest
+    container_name: front-ui
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - spring
+    depends_on:
+      - eureka-server
   apigw:
     image: ${REPO_NAME}/apigw:latest
     container_name: apigw
