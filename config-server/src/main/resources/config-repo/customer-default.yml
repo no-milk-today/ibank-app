@@ -13,8 +13,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/customer
-    username: ${PG_USER:-pguser}
-    password: password
+    username: ${PG_USER}
+    password: ${PG_PASSWORD}
     driver-class-name: org.postgresql.Driver # optional
   jpa:
     hibernate:
