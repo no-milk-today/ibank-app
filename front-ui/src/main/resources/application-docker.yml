@@ -1,10 +1,10 @@
 server:
   port: 8085
-  forward-headers-strategy: native # если приложение стоит за gateway и нужны корректные redirect-uri
+  forward-headers-strategy: native
+
 spring:
   application:
     name: front-ui
-
   security:
     oauth2:
       client:
@@ -16,13 +16,8 @@ spring:
             scope: openid,profile,email
         provider:
           keycloak:
-            issuer-uri: http://localhost:8090/realms/bank-realm
-            authorization-uri: http://localhost:8090/realms/bank-realm/protocol/openid-connect/auth
-            token-uri: http://keycloak-bank:8080/realms/bank-realm/protocol/openid-connect/token
-            jwk-set-uri: http://keycloak-bank:8080/realms/bank-realm/protocol/openid-connect/certs
-            # для браузерных запросов будет использоваться внешний адрес Keycloak на localhost:8090
+            issuer-uri: http://keycloak-bank:8080/realms/bank-realm  # В Docker используем сервис keycloak
 
-# ─── Keycloak admin-client (service account front-ui-admin) ──────────────────────
 keycloak:
   admin:
     server-url:  http://keycloak-bank:8080
@@ -30,11 +25,10 @@ keycloak:
     client-id:   front-ui-admin
     client-secret: front-ui-admin-secret
 
-
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://eureka-server:8761/eureka
+      defaultZone: http://eureka-server:8761/eureka/  # Сервис Eureka по имени
   instance:
     preferIpAddress: true
 
@@ -66,8 +60,3 @@ resilience4j:
       transfer-client:
         maxAttempts: 3
         waitDuration: 500ms
-
-logging:
-  level:
-    org.springframework.security: TRACE
-    org.springframework.security.oauth2: TRACE
