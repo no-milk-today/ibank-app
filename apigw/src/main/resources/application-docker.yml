@@ -18,9 +18,9 @@ spring:
           uri: lb://FRONT-UI
           predicates:
             - Path=/main/**, /, /signup/**, /user/**, /css/**, /js/**, /webjars/**, /favicon.ico, /images/**, /oauth2/authorization/**, /login/oauth2/code/**, /logout
-          filters:  # ← добавить фильтры для этого роута (чтобы корректно работали редиректы)
+          filters:
             - AddRequestHeader=X-Forwarded-Proto, http
-            - AddRequestHeader=X-Forwarded-Host, apigw:8080
+            - AddRequestHeader=X-Forwarded-Host, localhost:8080 # не apigw:8080
             - AddRequestHeader=X-Forwarded-Port, 8080
         - id: exchange
           uri: lb://EXCHANGE

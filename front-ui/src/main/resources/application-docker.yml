@@ -17,6 +17,10 @@ spring:
         provider:
           keycloak:
             issuer-uri: http://keycloak-bank:8080/realms/bank-realm
+            authorization-uri: http://localhost:8090/realms/bank-realm/protocol/openid-connect/auth
+            token-uri: http://localhost:8090/realms/bank-realm/protocol/openid-connect/token
+            jwk-set-uri: http://localhost:8090/realms/bank-realm/protocol/openid-connect/certs
+            # для браузерных запросов будет использоваться внешний адрес Keycloak на localhost:8090
 
 # ─── Keycloak admin-client (service account front-ui-admin) ──────────────────────
 keycloak:
