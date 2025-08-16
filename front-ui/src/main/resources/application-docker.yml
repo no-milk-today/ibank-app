@@ -66,3 +66,8 @@ resilience4j:
       transfer-client:
         maxAttempts: 3
         waitDuration: 500ms
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
