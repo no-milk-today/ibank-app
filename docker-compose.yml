@@ -31,8 +31,7 @@ services:
   keycloak:
     container_name: keycloak-bank
     image: quay.io/keycloak/keycloak:26.1.3
-    command: ["start-dev"]
-    # command: ["start-dev", "--http-port=8080"]
+    command: ["start-dev", "--http-port=8080", "--hostname=keycloak.local", "--hostname-strict=false"]
     ports:
       - "8090:8080"
     environment:
@@ -41,8 +40,15 @@ services:
     networks:
       - spring
       - postgres
+    extra_hosts:
+      - "keycloak.local:host-gateway"   # чтобы браузер на хосте резолвил в контейнер
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/realms/master || exit 1"]
+      interval: 5s
+      retries: 10
+      start_period: 20s
 
   eureka-server:
     image: ${REPO_NAME}/eureka-server:latest
@@ -122,6 +128,8 @@ services:
     container_name: customer
     ports:
       - "8081:8081"
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
@@ -186,6 +194,8 @@ services:
     container_name: cash
     ports:
       - "8088:8088"
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     networks:
@@ -203,6 +213,8 @@ services:
     container_name: transfer
     ports:
       - "8089:8089"
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     networks:
@@ -220,8 +232,8 @@ services:
     container_name: front-ui
     ports:
       - "8085:8085"
-#    extra_hosts:
-#      - "host.docker.internal:host-gateway"
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     networks:

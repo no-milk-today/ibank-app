@@ -3,7 +3,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://keycloak-bank:8080/realms/bank-realm
+          issuer-uri: http://keycloak.local:8090/realms/bank-realm
 
   datasource:
     url: jdbc:postgresql://postgres-bank:5432/customer
@@ -39,4 +39,4 @@ eureka:
     service-url:
       defaultZone: http://eureka-server:8761/eureka
     instance:
-      preferIpAddress: true # Use IP address instead of hostname (resolves Api Gateway issues)
+      hostname: customer

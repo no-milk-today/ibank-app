@@ -14,4 +14,4 @@ eureka:
     serviceUrl:
       defaultZone: http://eureka-server:8761/eureka/
   instance:
-    preferIpAddress: true # Use IP address instead of hostname (resolves Api Gateway issues)
+    hostname: transfer
