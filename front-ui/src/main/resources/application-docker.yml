@@ -30,7 +30,7 @@ eureka:
     serviceUrl:
       defaultZone: http://eureka-server:8761/eureka/  # Сервис Eureka по имени
   instance:
-    preferIpAddress: true
+    hostname: front-ui
 
 resilience4j:
   circuitbreaker:
