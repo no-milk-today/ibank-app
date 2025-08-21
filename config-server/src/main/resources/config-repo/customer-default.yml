@@ -8,6 +8,7 @@ spring:
     client:
       serviceUrl:
         defaultZone: http://localhost:8761/eureka/
+      enabled: false
     instance:
       preferIpAddress: true # Use IP address instead of hostname (resolves Api Gateway issues)
 
