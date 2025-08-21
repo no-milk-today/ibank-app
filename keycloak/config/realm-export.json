@@ -89,9 +89,35 @@
       "redirectUris": [],
       "defaultRoles": [],
       "attributes": {
-        "client_credentials.use_refresh_token": "false"
+        "client_credentials.use_refresh_token": "false",
+        "realm_client": "false",
+        "post.logout.redirect.uris": "+"
       },
-      "defaultClientScopes": [ "roles" ]
+      "defaultClientScopes": [
+        "service_account",
+        "roles"
+      ],
+      "enabled": true,
+      "surrogateAuthRequired": false,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "frontchannelLogout": false,
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "optionalClientScopes": [],
+      "access": {
+        "view": true,
+        "configure": true,
+        "manage": true
+      },
+      "authenticationFlowBindingOverrides": {},
+      "notBefore": 0,
+      "webOrigins": []
     },
     {
       "clientId": "cash",
@@ -99,10 +125,26 @@
       "serviceAccountsEnabled": true,
       "publicClient": false,
       "secret": "cash-secret",
-      "defaultClientScopes": [ "roles" ]
+      "defaultClientScopes": [
+        "roles"
+      ]
     }
   ],
-
   "groups": [],
-  "users": []
+  "users": [
+    {
+      "username": "service-account-front-ui-admin",
+      "enabled": true,
+      "serviceAccountClientId": "front-ui-admin",
+      "realmRoles": [
+        "ROLE_USER"
+      ],
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users"
+        ]
+      }
+    }
+  ]
 }
