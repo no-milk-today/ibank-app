@@ -2,6 +2,11 @@ server:
   port: 8085
   forward-headers-strategy: native
 
+app:
+  config:
+    external-base-url: http://localhost:8080   # URL, по которому браузер обращается к приложению (через API Gateway)
+    keycloak-base-url: http://localhost:8080  # Внутренний docker hostname и порт контейнера keycloak
+
 spring:
   application:
     name: front-ui
@@ -12,15 +17,15 @@ spring:
           keycloak:
             client-id: front-ui
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: "${app.config.external-base-url}/login/oauth2/code/{registrationId}"
             scope: openid,profile,email
         provider:
           keycloak:
-            issuer-uri: http://keycloak-bank:8080/realms/bank-realm  # В Docker используем сервис keycloak
+            issuer-uri: ${app.config.keycloak-base-url}/realms/bank-realm  # Используем внешний URL Keycloak
 
 keycloak:
   admin:
-    server-url:  http://keycloak-bank:8080
+    server-url:  ${app.config.keycloak-base-url}
     realm:       bank-realm
     client-id:   front-ui-admin
     client-secret: front-ui-admin-secret
@@ -30,7 +35,7 @@ eureka:
     serviceUrl:
       defaultZone: http://eureka-server:8761/eureka/  # Сервис Eureka по имени
   instance:
-    preferIpAddress: true
+    hostname: front-ui
 
 resilience4j:
   circuitbreaker:
