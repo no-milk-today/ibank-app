@@ -5,8 +5,8 @@ spring:
     name: notification
   datasource:
     password: ${PG_PASSWORD}
-    url: jdbc:postgresql://localhost:5432/notification
-    username: ${PG_USER:-pguser}
+    url: jdbc:postgresql://postgres-bank:5432/notification
+    username: ${PG_USER}
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -17,8 +17,8 @@ spring:
     show-sql: true
 eureka:
   client:
-    # enabled: false
+    enabled: false
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://eureka-server:8761/eureka
     fetch-registry: true
     register-with-eureka: true

@@ -31,12 +31,12 @@ services:
   keycloak:
     container_name: keycloak-bank
     image: quay.io/keycloak/keycloak:26.1.3
-    command: ["start-dev"]
+    command: ["start-dev", "--import-realm"]
     ports:
       - "8090:8080"
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
     volumes:
       - ./keycloak/config:/opt/keycloak/data/import  # Монтируем папку с realm-файлом
     networks:
@@ -45,202 +45,184 @@ services:
     depends_on:
       - postgres
 
-  eureka-server:
-    image: ${REPO_NAME}/eureka-server:latest
-    container_name: eureka-server
-    ports:
-      - "8761:8761"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    networks:
-      - spring
-    healthcheck:
-      test: [ "CMD-SHELL", "curl --fail http://localhost:8761/actuator/health || exit 1" ]
-      interval: 5s
-      retries: 10
-      start_period: 20s
-  config-server:
-    image: ${REPO_NAME}/config-server:latest
-    container_name: config-server
-    ports:
-      - "8888:8888"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker,native
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      - eureka-server
-    healthcheck:
-      test: curl --fail http://localhost:8888/actuator/health || exit 1
-      interval: 5s
-      retries: 10
-      start_period: 10s
-  exchange:
-    image: ${REPO_NAME}/exchange:latest
-    container_name: exchange
-    ports:
-      - "8086:8086"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - PG_USER=${PG_USER}
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      - eureka-server
-      - postgres
-      - keycloak
-    healthcheck:
-      test: [ "CMD-SHELL", "curl --fail http://localhost:8086/actuator/health || exit 1" ]
-      interval: 5s
-      retries: 10
-      start_period: 20s
-  exchange-generator:
-    image: ${REPO_NAME}/exchange-generator:latest
-    container_name: exchange-generator
-    ports:
-      - "8087:8087"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      config-server:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-      postgres:
-        condition: service_started
-      keycloak:
-        condition: service_started
-      exchange:
-        condition: service_healthy
-  customer:
-    image: ${REPO_NAME}/customer:latest
-    container_name: customer
-    ports:
-      - "8081:8081"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - PG_USER=${PG_USER}  # from .env file
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-      postgres:
-        condition: service_started
-      keycloak:
-        condition: service_started
-  fraud:
-    image: ${REPO_NAME}/fraud:latest
-    container_name: fraud
-    ports:
-      - "8082:8082"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - PG_USER=${PG_USER}
-      - PG_PASSWORD=${PG_PASSWORD}
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-      postgres:
-        condition: service_started
-      keycloak:
-        condition: service_started
-  notification:
-    image: ${REPO_NAME}/notification:latest
-    container_name: notification
-    ports:
-      - "8083:8083"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - PG_USER=${PG_USER}
-      - PG_PASSWORD=${PG_PASSWORD}
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-      postgres:
-        condition: service_started
-      keycloak:
-        condition: service_started
-  cash:
-    image: ${REPO_NAME}/cash:latest
-    container_name: cash
-    ports:
-      - "8088:8088"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      postgres:
-        condition: service_started
-      keycloak:
-        condition: service_started
-  transfer:
-    image: ${REPO_NAME}/transfer:latest
-    container_name: transfer
-    ports:
-      - "8089:8089"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      postgres:
-        condition: service_started
-      keycloak:
-        condition: service_started
-  front-ui:
-    image: ${REPO_NAME}/front-ui:latest
-    container_name: front-ui
-    ports:
-      - "8085:8085"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    networks:
-      - spring
-    depends_on:
-      - eureka-server
-      - keycloak
-  apigw:
-    image: ${REPO_NAME}/apigw:latest
-    container_name: apigw
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    networks:
-      - spring
-    depends_on:
-      - eureka-server
+#  eureka-server:
+#    image: ${REPO_NAME}/eureka-server:latest
+#    container_name: eureka-server
+#    ports:
+#      - "8761:8761"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - spring
+#    healthcheck:
+#      test: [ "CMD-SHELL", "curl --fail http://localhost:8761/actuator/health || exit 1" ]
+#      interval: 5s
+#      retries: 10
+#      start_period: 20s
+#  config-server:
+#    image: ${REPO_NAME}/config-server:latest
+#    container_name: config-server
+#    ports:
+#      - "8888:8888"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker,native
+#    networks:
+#      - spring
+#      - postgres
+#    healthcheck:
+#      test: curl --fail http://localhost:8888/actuator/health || exit 1
+#      interval: 5s
+#      retries: 10
+#      start_period: 10s
+#  exchange:
+#    image: ${REPO_NAME}/exchange:latest
+#    container_name: exchange
+#    ports:
+#      - "8086:8086"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - PG_USER=${PG_USER}
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      - postgres
+#      - keycloak
+#    healthcheck:
+#      test: [ "CMD-SHELL", "curl --fail http://localhost:8086/actuator/health || exit 1" ]
+#      interval: 5s
+#      retries: 10
+#      start_period: 20s
+#  exchange-generator:
+#    image: ${REPO_NAME}/exchange-generator:latest
+#    container_name: exchange-generator
+#    ports:
+#      - "8087:8087"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      config-server:
+#        condition: service_healthy
+#      postgres:
+#        condition: service_started
+#      keycloak:
+#        condition: service_started
+#      exchange:
+#        condition: service_healthy
+#  customer:
+#    image: ${REPO_NAME}/customer:latest
+#    container_name: customer
+#    ports:
+#      - "8081:8081"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+#      - PG_USER=${PG_USER}  # from .env file
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      config-server:
+#        condition: service_healthy
+#      postgres:
+#        condition: service_started
+#      keycloak:
+#        condition: service_started
+#  fraud:
+#    image: ${REPO_NAME}/fraud:latest
+#    container_name: fraud
+#    ports:
+#      - "8082:8082"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - PG_USER=${PG_USER}
+#      - PG_PASSWORD=${PG_PASSWORD}
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      config-server:
+#        condition: service_healthy
+#      postgres:
+#        condition: service_started
+#      keycloak:
+#        condition: service_started
+#  notification:
+#    image: ${REPO_NAME}/notification:latest
+#    container_name: notification
+#    ports:
+#      - "8083:8083"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+#      - PG_USER=${PG_USER}
+#      - PG_PASSWORD=${PG_PASSWORD}
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      config-server:
+#        condition: service_healthy
+#      postgres:
+#        condition: service_started
+#      keycloak:
+#        condition: service_started
+#  cash:
+#    image: ${REPO_NAME}/cash:latest
+#    container_name: cash
+#    ports:
+#      - "8088:8088"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      postgres:
+#        condition: service_started
+#      keycloak:
+#        condition: service_started
+#  transfer:
+#    image: ${REPO_NAME}/transfer:latest
+#    container_name: transfer
+#    ports:
+#      - "8089:8089"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      postgres:
+#        condition: service_started
+#      keycloak:
+#        condition: service_started
+#  front-ui:
+#    image: ${REPO_NAME}/front-ui:latest
+#    container_name: front-ui
+#    ports:
+#      - "8085:8085"
+#    extra_hosts:
+#      - "host.docker.internal:host-gateway"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - spring
+#    depends_on:
+#      - keycloak
+#  apigw:
+#    image: ${REPO_NAME}/apigw:latest
+#    container_name: apigw
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - spring
 
 networks:
   postgres:

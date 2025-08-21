@@ -7,21 +7,12 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8090/realms/bank-realm
-  eureka:
-    client:
-      # enabled: false
-      serviceUrl:
-        defaultZone: http://localhost:8761/eureka/
-      fetch-registry: true
-      register-with-eureka: true
-    instance:
-      preferIpAddress: true # Use IP address instead of hostname (resolves Api Gateway issues)
+          issuer-uri: http://keycloak-bank:8080/realms/bank-realm
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/customer
+    url: jdbc:postgresql://postgres-bank:5432/customer
     username: ${PG_USER}
-    password: ${PG_PASSWORD}
+    password: password
     driver-class-name: org.postgresql.Driver # optional
   jpa:
     hibernate:
@@ -47,16 +38,10 @@ spring:
           maxAttempts: 3
           waitDuration: 500ms
 
-#  config:
-#    import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://localhost:8888}
-#  cloud:
-#    config:
-#      retry:
-#        initial-interval: 2000
-#        max-attempts: 10
-#        multiplier: 1.5
-
-logging:
-  level:
-    org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka
+    instance:
+      hostname: front-ui
+    enabled: false
