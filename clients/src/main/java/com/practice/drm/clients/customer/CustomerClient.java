@@ -6,7 +6,10 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 
-@FeignClient("customer")
+@FeignClient(
+        name = "customer",
+        url = "${clients.customer.url}"
+)
 public interface CustomerClient {
 
     @GetMapping("/api/v1/customers/main")

@@ -11,11 +11,11 @@ spring:
         - PreserveHostHeader
       routes:
         - id: customer
-          uri: lb://CUSTOMER
+          uri: http://localhost:8081
           predicates:
             - Path=/api/v1/customers/**
         - id: front-ui
-          uri: lb://FRONT-UI
+          uri: http://localhost:8085
           predicates:
             - Path=/main/**, /, /signup/**, /user/**, /css/**, /js/**, /webjars/**, /favicon.ico, /images/**, /oauth2/authorization/**, /login/oauth2/code/**, /logout
           filters:  # ← добавить фильтры для этого роута (чтобы корректно работали редиректы)
@@ -23,7 +23,7 @@ spring:
             - AddRequestHeader=X-Forwarded-Host, localhost:8080
             - AddRequestHeader=X-Forwarded-Port, 8080
         - id: exchange
-          uri: lb://EXCHANGE
+          uri: http://localhost:8086
           predicates:
             - Path=/api/rates/**
   security:
@@ -32,11 +32,8 @@ spring:
         jwt:
           issuer-uri: http://localhost:8090/realms/bank-realm
 
-
-eureka:
-  client:
-    # enabled: false
-    service-url:
-      defaultZone: http://localhost:8761/eureka
-    fetch-registry: true
-    register-with-eureka: true
+logging:
+  level:
+    org.springframework.security: TRACE
+    org.springframework.security.oauth2: TRACE
+    org.springframework.cloud.gateway: TRACE

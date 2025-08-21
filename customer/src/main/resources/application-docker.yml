@@ -37,11 +37,3 @@ spring:
         fraudCheckService:
           maxAttempts: 3
           waitDuration: 500ms
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://eureka-server:8761/eureka
-    instance:
-      hostname: front-ui
-    enabled: false

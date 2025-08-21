@@ -26,15 +26,6 @@ keycloak:
     client-id:   front-ui-admin
     client-secret: front-ui-admin-secret
 
-
-eureka:
-  client:
-    # enabled: false
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    preferIpAddress: true
-
 resilience4j:
   circuitbreaker:
     instances:
