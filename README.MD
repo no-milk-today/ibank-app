@@ -389,3 +389,6 @@ Content-Type: application/json
 
 ### using Front-UI:
 В браузере — форма отправляет POST `/user/{login}/cash`, параметры: currency, value, action ("DEPOSIT"/"WITHDRAW"). Front-UI вызывает Cash сервис, результат и ошибки отображаются на /main.
+
+
+minikube service keycloak-nodeport
