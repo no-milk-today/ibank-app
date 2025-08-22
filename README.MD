@@ -221,30 +221,30 @@ The system consists of the following microservices running on different ports:
 - **Config Server**: `8888` - Externalized configuration management
 
 ## Running the Project
-1. ```docker-compose up -d```. Then import realm configuration from `keycloak/config/realm-export.json` into Keycloak.
+1. .env >> прописать свои значения для postgres (в докере)
+2. ```docker-compose up -d```.
    - **Note:** Ensure that the Keycloak server is running on port `8090` and the realm is named `bank-realm`.
    - The Keycloak server will be used for authentication and authorization.
-   - Navigate to `Clients` → `front-ui-admin` → `Service accounts roles`. 
-   - **Add the following roles:** `realm-management → manage-users`, `realm-management → view-users`
 
-2. connect to pgadmin and create a databases:
+2. connect to `postgres-bank` container and create a databases:
    ```
    CREATE DATABASE customer;
    CREATE DATABASE exchange;
    CREATE DATABASE fraud;
    CREATE DATABASE notification;
     ```
-3. Ensure you have Java and Maven installed.
-4. Build the project:
+3. Build the project:
    ```bash
    mvn clean install
     ```
-5. Run the services (start the Eureka Server first, then the config-server and then the others):
+4. Run the services (start the Eureka Server first, then the config-server and then the others):
    ```bash
    mvn spring-boot:run
     ```
-6. Access the application (api-gateway) at `http://localhost:8080`.
-7. Register new customer `http://localhost:8080/signup`.
+5. Для сервисов customer, fraud, notification, exchange подставить env переменную PG_USER при запуске.
+![img_1.png](img_1.png)
+6. Register new customer `http://localhost:8080/signup`.
+7. Access the application (api-gateway) at `http://localhost:8080`. After successful login redirect to http://localhost:8080/main 
 8. Do logout (via `http://localhost:8080/logout` and create one more customer (to test transferring money between them).
 9. Access the Eureka dashboard at `http://localhost:8761` to see all registered services.
 
