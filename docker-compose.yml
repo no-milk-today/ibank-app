@@ -31,16 +31,17 @@ services:
   keycloak:
     container_name: keycloak-bank
     image: quay.io/keycloak/keycloak:26.1.3
-    environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-    command: ["start-dev"]
+    command: ["start-dev", "--import-realm"]
     ports:
       - "8090:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak/config:/opt/keycloak/data/import  # Монтируем папку с realm-файлом
     networks:
       - postgres # для доступа к БД
       - spring # для взаимодействия с Spring-сервисами
-    restart: unless-stopped
     depends_on:
       - postgres
 
@@ -220,12 +221,15 @@ services:
     container_name: front-ui
     ports:
       - "8085:8085"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     networks:
       - spring
     depends_on:
       - eureka-server
+      - keycloak
   apigw:
     image: ${REPO_NAME}/apigw:latest
     container_name: apigw
