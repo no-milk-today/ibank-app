@@ -26,3 +26,16 @@ resilience4j:
       exchange-client:
         maxAttempts: 3
         waitDuration: 500ms
+
+# Настройки actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"  # Сначала откройте все endpoints для диагностики
+      base-path: /actuator  # Явно укажите базовый путь
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always  # Покажите детали health check
