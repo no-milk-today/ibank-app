@@ -213,8 +213,6 @@ services:
       dockerfile: front-ui/Dockerfile
     ports:
       - "8085:8085"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     networks:
