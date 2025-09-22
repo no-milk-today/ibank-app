@@ -14,7 +14,7 @@ spring:
             scope: openid
         provider:
           keycloak:
-            issuer-uri: http://keycloak.local:8090/realms/bank-realm
+            issuer-uri: "http://keycloak-bank:8080/realms/bank-realm"
 
 keycloak:
   admin:

@@ -48,8 +48,8 @@ services:
   eureka-server:
     container_name: eureka-server
     build:
-      context: ./eureka-server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: eureka-server/Dockerfile
     ports:
       - "8761:8761"
     environment:
@@ -64,8 +64,8 @@ services:
   exchange:
     container_name: exchange
     build:
-      context: ./exchange
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: exchange/Dockerfile
     ports:
       - "8086:8086"
     environment:
@@ -87,8 +87,8 @@ services:
   exchange-generator:
     container_name: exchange-generator
     build:
-      context: ./exchange-generator
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: exchange-generator/Dockerfile
     ports:
       - "8087:8087"
     environment:
@@ -108,8 +108,8 @@ services:
   customer:
     container_name: customer
     build:
-      context: ./customer
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: customer/Dockerfile
     ports:
       - "8081:8081"
     environment:
@@ -129,8 +129,8 @@ services:
   fraud:
     container_name: fraud
     build:
-      context: ./fraud
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: fraud/Dockerfile
     ports:
       - "8082:8082"
     environment:
@@ -150,8 +150,8 @@ services:
   notification:
     container_name: notification
     build:
-      context: ./notification
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: notification/Dockerfile
     ports:
       - "8083:8083"
     environment:
@@ -171,8 +171,8 @@ services:
   cash:
     container_name: cash
     build:
-      context: ./cash
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: cash/Dockerfile
     ports:
       - "8088:8088"
     environment:
@@ -190,8 +190,8 @@ services:
   transfer:
     container_name: transfer
     build:
-      context: ./transfer
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: transfer/Dockerfile
     ports:
       - "8089:8089"
     environment:
@@ -209,8 +209,8 @@ services:
   front-ui:
     container_name: front-ui
     build:
-      context: ./front-ui
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: front-ui/Dockerfile
     ports:
       - "8085:8085"
     extra_hosts:
@@ -227,8 +227,8 @@ services:
   apigw:
     container_name: apigw
     build:
-      context: ./apigw
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apigw/Dockerfile
     ports:
       - "8080:8080"
     environment:

@@ -1,13 +1,16 @@
 FROM maven:3.9.9-eclipse-temurin-21 AS build
 
 WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline
-COPY src ./src
-RUN mvn package -DskipTests
 
+# Копируем все файлы проекта, включая корневой pom.xml и дочерние модули
+COPY . .
+
+# Сборка всего проекта с пропуском тестов
+RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /app/target/eureka-server-*.jar app.jar
+
+# Копируем собранный jar конкретного микросервиса из target данной модуля
+COPY --from=build /app/eureka-server/target/eureka-server-*.jar app.jar
 EXPOSE 8761
 ENTRYPOINT ["java", "-jar", "app.jar"]
