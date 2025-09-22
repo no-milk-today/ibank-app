@@ -23,7 +23,6 @@
     <module>exchange-generator</module>
     <module>cash</module>
     <module>transfer</module>
-    <module>config-server</module>
   </modules>
 
   <properties>

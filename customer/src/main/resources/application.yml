@@ -3,5 +3,44 @@ server:
 spring:
   application:
     name: customer
-  config:
-    import: optional:configserver:http://127.0.0.1:8888 # Параметры подключения к Config Server
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8090/realms/bank-realm
+  datasource:
+    url: jdbc:postgresql://localhost:5432/customer
+    username: ${PG_USER:-pguser}
+    password: ${PG_PASSWORD:-password}
+    driver-class-name: org.postgresql.Driver # optional
+  jpa:
+    hibernate:
+      ddl-auto: create-drop # Use 'create-drop' for development, 'update' for production
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    preferIpAddress: true # Use IP address instead of hostname (resolves Api Gateway issues)
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      fraudCheckService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+  retry:
+    instances:
+      fraudCheckService:
+        maxAttempts: 3
+        waitDuration: 500ms
