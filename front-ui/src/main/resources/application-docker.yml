@@ -1,0 +1,58 @@
+server:
+  port: 8085
+  forward-headers-strategy: native # framework
+
+spring:
+  application:
+    name: front-ui
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: front-ui
+            scope: openid
+        provider:
+          keycloak:
+            issuer-uri: http://keycloak.local:8090/realms/bank-realm
+
+keycloak:
+  admin:
+    server-url:  http://keycloak-bank:8080
+    realm:       bank-realm
+    client-id:   front-ui-admin
+    client-secret: front-ui-admin-secret
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      customer-client:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+      exchange-client:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+      transfer-client:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+  retry:
+    instances:
+      customer-client:
+        maxAttempts: 3
+        waitDuration: 500ms
+      exchange-client:
+        maxAttempts: 3
+        waitDuration: 500ms
+      transfer-client:
+        maxAttempts: 3
+        waitDuration: 500ms

@@ -1,0 +1,15 @@
+server:
+  port: 8089
+spring:
+  application:
+    name: transfer
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak-bank:8080/realms/bank-realm
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka
