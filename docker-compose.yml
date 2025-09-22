@@ -41,201 +41,201 @@ services:
       - ./keycloak/config:/opt/keycloak/data/import  # Монтируем папку с realm-файлом
     networks:
       - postgres
-      - spring # для взаимодействия с Spring-сервисами
+    restart: unless-stopped
     depends_on:
       - postgres
 
-  eureka-server:
-    container_name: eureka-server
-    build:
-      context: .
-      dockerfile: eureka-server/Dockerfile
-    ports:
-      - "8761:8761"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    networks:
-      - spring
-    healthcheck:
-      test: [ "CMD-SHELL", "curl --fail http://localhost:8761/actuator/health || exit 1" ]
-      interval: 5s
-      retries: 10
-      start_period: 20s
-  exchange:
-    container_name: exchange
-    build:
-      context: .
-      dockerfile: exchange/Dockerfile
-    ports:
-      - "8086:8086"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - PG_USER=${PG_USER}
-      - PG_PASSWORD=${PG_PASSWORD}
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      - eureka-server
-      - postgres
-      - keycloak
-    healthcheck:
-      test: [ "CMD-SHELL", "curl --fail http://localhost:8086/actuator/health || exit 1" ]
-      interval: 5s
-      retries: 10
-      start_period: 20s
-  exchange-generator:
-    container_name: exchange-generator
-    build:
-      context: .
-      dockerfile: exchange-generator/Dockerfile
-    ports:
-      - "8087:8087"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      postgres:
-        condition: service_started
-      keycloak:
-        condition: service_started
-      exchange:
-        condition: service_healthy
-  customer:
-    container_name: customer
-    build:
-      context: .
-      dockerfile: customer/Dockerfile
-    ports:
-      - "8081:8081"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - PG_USER=${PG_USER}  # from .env file
-      - PG_PASSWORD=${PG_PASSWORD}
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      postgres:
-        condition: service_started
-      keycloak:
-        condition: service_started
-  fraud:
-    container_name: fraud
-    build:
-      context: .
-      dockerfile: fraud/Dockerfile
-    ports:
-      - "8082:8082"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - PG_USER=${PG_USER}
-      - PG_PASSWORD=${PG_PASSWORD}
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      postgres:
-        condition: service_started
-      keycloak:
-        condition: service_started
-  notification:
-    container_name: notification
-    build:
-      context: .
-      dockerfile: notification/Dockerfile
-    ports:
-      - "8083:8083"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - PG_USER=${PG_USER}
-      - PG_PASSWORD=${PG_PASSWORD}
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      postgres:
-        condition: service_started
-      keycloak:
-        condition: service_started
-  cash:
-    container_name: cash
-    build:
-      context: .
-      dockerfile: cash/Dockerfile
-    ports:
-      - "8088:8088"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      postgres:
-        condition: service_started
-      keycloak:
-        condition: service_started
-  transfer:
-    container_name: transfer
-    build:
-      context: .
-      dockerfile: transfer/Dockerfile
-    ports:
-      - "8089:8089"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    networks:
-      - spring
-      - postgres
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      postgres:
-        condition: service_started
-      keycloak:
-        condition: service_started
-  front-ui:
-    container_name: front-ui
-    build:
-      context: .
-      dockerfile: front-ui/Dockerfile
-    ports:
-      - "8085:8085"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    networks:
-      - spring
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      keycloak:
-        condition: service_started
-  apigw:
-    container_name: apigw
-    build:
-      context: .
-      dockerfile: apigw/Dockerfile
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    networks:
-      - spring
-    depends_on:
-      eureka-server:
-        condition: service_healthy
+#  eureka-server:
+#    container_name: eureka-server
+#    build:
+#      context: .
+#      dockerfile: eureka-server/Dockerfile
+#    ports:
+#      - "8761:8761"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - spring
+#    healthcheck:
+#      test: [ "CMD-SHELL", "curl --fail http://localhost:8761/actuator/health || exit 1" ]
+#      interval: 5s
+#      retries: 10
+#      start_period: 20s
+#  exchange:
+#    container_name: exchange
+#    build:
+#      context: .
+#      dockerfile: exchange/Dockerfile
+#    ports:
+#      - "8086:8086"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - PG_USER=${PG_USER}
+#      - PG_PASSWORD=${PG_PASSWORD}
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      - eureka-server
+#      - postgres
+#      - keycloak
+#    healthcheck:
+#      test: [ "CMD-SHELL", "curl --fail http://localhost:8086/actuator/health || exit 1" ]
+#      interval: 5s
+#      retries: 10
+#      start_period: 20s
+#  exchange-generator:
+#    container_name: exchange-generator
+#    build:
+#      context: .
+#      dockerfile: exchange-generator/Dockerfile
+#    ports:
+#      - "8087:8087"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      eureka-server:
+#        condition: service_healthy
+#      postgres:
+#        condition: service_started
+#      keycloak:
+#        condition: service_started
+#      exchange:
+#        condition: service_healthy
+#  customer:
+#    container_name: customer
+#    build:
+#      context: .
+#      dockerfile: customer/Dockerfile
+#    ports:
+#      - "8081:8081"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - PG_USER=${PG_USER}  # from .env file
+#      - PG_PASSWORD=${PG_PASSWORD}
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      eureka-server:
+#        condition: service_healthy
+#      postgres:
+#        condition: service_started
+#      keycloak:
+#        condition: service_started
+#  fraud:
+#    container_name: fraud
+#    build:
+#      context: .
+#      dockerfile: fraud/Dockerfile
+#    ports:
+#      - "8082:8082"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - PG_USER=${PG_USER}
+#      - PG_PASSWORD=${PG_PASSWORD}
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      eureka-server:
+#        condition: service_healthy
+#      postgres:
+#        condition: service_started
+#      keycloak:
+#        condition: service_started
+#  notification:
+#    container_name: notification
+#    build:
+#      context: .
+#      dockerfile: notification/Dockerfile
+#    ports:
+#      - "8083:8083"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - PG_USER=${PG_USER}
+#      - PG_PASSWORD=${PG_PASSWORD}
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      eureka-server:
+#        condition: service_healthy
+#      postgres:
+#        condition: service_started
+#      keycloak:
+#        condition: service_started
+#  cash:
+#    container_name: cash
+#    build:
+#      context: .
+#      dockerfile: cash/Dockerfile
+#    ports:
+#      - "8088:8088"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      eureka-server:
+#        condition: service_healthy
+#      postgres:
+#        condition: service_started
+#      keycloak:
+#        condition: service_started
+#  transfer:
+#    container_name: transfer
+#    build:
+#      context: .
+#      dockerfile: transfer/Dockerfile
+#    ports:
+#      - "8089:8089"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - spring
+#      - postgres
+#    depends_on:
+#      eureka-server:
+#        condition: service_healthy
+#      postgres:
+#        condition: service_started
+#      keycloak:
+#        condition: service_started
+#  front-ui:
+#    container_name: front-ui
+#    build:
+#      context: .
+#      dockerfile: front-ui/Dockerfile
+#    ports:
+#      - "8085:8085"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - spring
+#    depends_on:
+#      eureka-server:
+#        condition: service_healthy
+#      keycloak:
+#        condition: service_started
+#  apigw:
+#    container_name: apigw
+#    build:
+#      context: .
+#      dockerfile: apigw/Dockerfile
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - spring
+#    depends_on:
+#      eureka-server:
+#        condition: service_healthy
 
 networks:
   postgres:
