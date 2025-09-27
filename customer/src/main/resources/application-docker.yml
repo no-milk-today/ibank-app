@@ -26,6 +26,7 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://eureka-server:8761/eureka
+    enabled: false
   instance:
     hostname: customer
 
