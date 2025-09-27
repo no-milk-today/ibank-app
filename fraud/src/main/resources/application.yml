@@ -5,8 +5,8 @@ spring:
     name: fraud
   datasource:
     url: jdbc:postgresql://localhost:5432/fraud
-    username: ${PG_USER:-pguser}
-    password: ${PG_PASSWORD:-password}
+    username: ${PG_USER:pguser}
+    password: ${PG_PASSWORD:password}
   jpa:
     hibernate:
       ddl-auto: create-drop
