@@ -13,7 +13,8 @@ import org.springframework.context.annotation.PropertySources;
         basePackages = "com.practice.drm.clients"
 )
 @PropertySources({
-        @PropertySource("classpath:clients-${spring.profiles.active}.properties")
+//      @PropertySource("classpath:clients-${spring.profiles.active}.properties")
+        @PropertySource("classpath:clients-default.properties")
 })
 public class CustomerApplication {
     public static void main(String[] args) {
