@@ -1,0 +1,22 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: fraud
+  datasource:
+    url: jdbc:postgresql://postgres:5432/fraud
+    username: ${PG_USER:pguser}
+    password: ${PG_PASSWORD:password}
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+    enabled: false
